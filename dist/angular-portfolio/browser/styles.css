@@ -1264,8 +1264,9 @@ video {
 :root {
   --page-max-width: 80rem;
   --page-padding: clamp(1.5rem, 2vw, 3rem);
-  --page-container-offset: max( var(--page-padding), calc((100vw - var(--page-max-width)) / 2 + var(--page-padding)) );
+  --page-container-offset: calc((100vw - var(--page-max-width)) / 2 + var(--page-padding));
   --card-size: 568px;
+  cursor: url("./media/cursor.png"), auto;
   --selection-bg: rgba(45, 212, 191, 0.25);
   --selection-text: #eafff8;
   --cursor-opacity: 1;
@@ -1296,6 +1297,7 @@ html,
 body {
   overflow-x: hidden;
   background-color: #0F0F0F;
+  cursor: url("./media/cursor.png"), auto !important;
 }
 html {
   scroll-behavior: smooth;
@@ -1694,6 +1696,9 @@ section[id] {
   .md\:h-\[98px\] {
     height: 98px;
   }
+  .md\:h-\[var\(--card-size\)\] {
+    height: var(--card-size);
+  }
   .md\:w-1\/2 {
     width: 50%;
   }
@@ -1702,6 +1707,9 @@ section[id] {
   }
   .md\:w-\[180px\] {
     width: 180px;
+  }
+  .md\:w-\[var\(--card-size\)\] {
+    width: var(--card-size);
   }
   .md\:flex-row {
     flex-direction: row;
@@ -1726,6 +1734,9 @@ section[id] {
   }
   .md\:gap-10 {
     gap: 2.5rem;
+  }
+  .md\:gap-12 {
+    gap: 3rem;
   }
   .md\:gap-6 {
     gap: 1.5rem;
@@ -1825,12 +1836,6 @@ section[id] {
   }
   .lg\:gap-0 {
     gap: 0px;
-  }
-  .lg\:gap-12 {
-    gap: 3rem;
-  }
-  .lg\:gap-8 {
-    gap: 2rem;
   }
   .lg\:px-10 {
     padding-left: 2.5rem;
