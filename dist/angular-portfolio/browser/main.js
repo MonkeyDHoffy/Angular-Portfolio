@@ -50,6 +50,2380 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
+// node_modules/zone.js/fesm2015/zone.js
+var global = globalThis;
+function __symbol__(name) {
+  const symbolPrefix = global["__Zone_symbol_prefix"] || "__zone_symbol__";
+  return symbolPrefix + name;
+}
+function initZone() {
+  const performance2 = global["performance"];
+  function mark(name) {
+    performance2 && performance2["mark"] && performance2["mark"](name);
+  }
+  function performanceMeasure(name, label) {
+    performance2 && performance2["measure"] && performance2["measure"](name, label);
+  }
+  mark("Zone");
+  class ZoneImpl {
+    static {
+      this.__symbol__ = __symbol__;
+    }
+    static assertZonePatched() {
+      if (global["Promise"] !== patches["ZoneAwarePromise"]) {
+        throw new Error("Zone.js has detected that ZoneAwarePromise `(window|global).Promise` has been overwritten.\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)");
+      }
+    }
+    static get root() {
+      let zone = ZoneImpl.current;
+      while (zone.parent) {
+        zone = zone.parent;
+      }
+      return zone;
+    }
+    static get current() {
+      return _currentZoneFrame.zone;
+    }
+    static get currentTask() {
+      return _currentTask;
+    }
+    // tslint:disable-next-line:require-internal-with-underscore
+    static __load_patch(name, fn, ignoreDuplicate = false) {
+      if (patches.hasOwnProperty(name)) {
+        const checkDuplicate = global[__symbol__("forceDuplicateZoneCheck")] === true;
+        if (!ignoreDuplicate && checkDuplicate) {
+          throw Error("Already loaded patch: " + name);
+        }
+      } else if (!global["__Zone_disable_" + name]) {
+        const perfName = "Zone:" + name;
+        mark(perfName);
+        patches[name] = fn(global, ZoneImpl, _api);
+        performanceMeasure(perfName, perfName);
+      }
+    }
+    get parent() {
+      return this._parent;
+    }
+    get name() {
+      return this._name;
+    }
+    constructor(parent, zoneSpec) {
+      this._parent = parent;
+      this._name = zoneSpec ? zoneSpec.name || "unnamed" : "<root>";
+      this._properties = zoneSpec && zoneSpec.properties || {};
+      this._zoneDelegate = new _ZoneDelegate(this, this._parent && this._parent._zoneDelegate, zoneSpec);
+    }
+    get(key) {
+      const zone = this.getZoneWith(key);
+      if (zone)
+        return zone._properties[key];
+    }
+    getZoneWith(key) {
+      let current = this;
+      while (current) {
+        if (current._properties.hasOwnProperty(key)) {
+          return current;
+        }
+        current = current._parent;
+      }
+      return null;
+    }
+    fork(zoneSpec) {
+      if (!zoneSpec)
+        throw new Error("ZoneSpec required!");
+      return this._zoneDelegate.fork(this, zoneSpec);
+    }
+    wrap(callback, source) {
+      if (typeof callback !== "function") {
+        throw new Error("Expecting function got: " + callback);
+      }
+      const _callback = this._zoneDelegate.intercept(this, callback, source);
+      const zone = this;
+      return function() {
+        return zone.runGuarded(_callback, this, arguments, source);
+      };
+    }
+    run(callback, applyThis, applyArgs, source) {
+      _currentZoneFrame = { parent: _currentZoneFrame, zone: this };
+      try {
+        return this._zoneDelegate.invoke(this, callback, applyThis, applyArgs, source);
+      } finally {
+        _currentZoneFrame = _currentZoneFrame.parent;
+      }
+    }
+    runGuarded(callback, applyThis = null, applyArgs, source) {
+      _currentZoneFrame = { parent: _currentZoneFrame, zone: this };
+      try {
+        try {
+          return this._zoneDelegate.invoke(this, callback, applyThis, applyArgs, source);
+        } catch (error) {
+          if (this._zoneDelegate.handleError(this, error)) {
+            throw error;
+          }
+        }
+      } finally {
+        _currentZoneFrame = _currentZoneFrame.parent;
+      }
+    }
+    runTask(task, applyThis, applyArgs) {
+      if (task.zone != this) {
+        throw new Error("A task can only be run in the zone of creation! (Creation: " + (task.zone || NO_ZONE).name + "; Execution: " + this.name + ")");
+      }
+      const zoneTask = task;
+      const { type, data: { isPeriodic = false, isRefreshable = false } = {} } = task;
+      if (task.state === notScheduled && (type === eventTask || type === macroTask)) {
+        return;
+      }
+      const reEntryGuard = task.state != running;
+      reEntryGuard && zoneTask._transitionTo(running, scheduled2);
+      const previousTask = _currentTask;
+      _currentTask = zoneTask;
+      _currentZoneFrame = { parent: _currentZoneFrame, zone: this };
+      try {
+        if (type == macroTask && task.data && !isPeriodic && !isRefreshable) {
+          task.cancelFn = void 0;
+        }
+        try {
+          return this._zoneDelegate.invokeTask(this, zoneTask, applyThis, applyArgs);
+        } catch (error) {
+          if (this._zoneDelegate.handleError(this, error)) {
+            throw error;
+          }
+        }
+      } finally {
+        const state = task.state;
+        if (state !== notScheduled && state !== unknown) {
+          if (type == eventTask || isPeriodic || isRefreshable && state === scheduling) {
+            reEntryGuard && zoneTask._transitionTo(scheduled2, running, scheduling);
+          } else {
+            const zoneDelegates = zoneTask._zoneDelegates;
+            this._updateTaskCount(zoneTask, -1);
+            reEntryGuard && zoneTask._transitionTo(notScheduled, running, notScheduled);
+            if (isRefreshable) {
+              zoneTask._zoneDelegates = zoneDelegates;
+            }
+          }
+        }
+        _currentZoneFrame = _currentZoneFrame.parent;
+        _currentTask = previousTask;
+      }
+    }
+    scheduleTask(task) {
+      if (task.zone && task.zone !== this) {
+        let newZone = this;
+        while (newZone) {
+          if (newZone === task.zone) {
+            throw Error(`can not reschedule task to ${this.name} which is descendants of the original zone ${task.zone.name}`);
+          }
+          newZone = newZone.parent;
+        }
+      }
+      task._transitionTo(scheduling, notScheduled);
+      const zoneDelegates = [];
+      task._zoneDelegates = zoneDelegates;
+      task._zone = this;
+      try {
+        task = this._zoneDelegate.scheduleTask(this, task);
+      } catch (err) {
+        task._transitionTo(unknown, scheduling, notScheduled);
+        this._zoneDelegate.handleError(this, err);
+        throw err;
+      }
+      if (task._zoneDelegates === zoneDelegates) {
+        this._updateTaskCount(task, 1);
+      }
+      if (task.state == scheduling) {
+        task._transitionTo(scheduled2, scheduling);
+      }
+      return task;
+    }
+    scheduleMicroTask(source, callback, data, customSchedule) {
+      return this.scheduleTask(new ZoneTask(microTask, source, callback, data, customSchedule, void 0));
+    }
+    scheduleMacroTask(source, callback, data, customSchedule, customCancel) {
+      return this.scheduleTask(new ZoneTask(macroTask, source, callback, data, customSchedule, customCancel));
+    }
+    scheduleEventTask(source, callback, data, customSchedule, customCancel) {
+      return this.scheduleTask(new ZoneTask(eventTask, source, callback, data, customSchedule, customCancel));
+    }
+    cancelTask(task) {
+      if (task.zone != this)
+        throw new Error("A task can only be cancelled in the zone of creation! (Creation: " + (task.zone || NO_ZONE).name + "; Execution: " + this.name + ")");
+      if (task.state !== scheduled2 && task.state !== running) {
+        return;
+      }
+      task._transitionTo(canceling, scheduled2, running);
+      try {
+        this._zoneDelegate.cancelTask(this, task);
+      } catch (err) {
+        task._transitionTo(unknown, canceling);
+        this._zoneDelegate.handleError(this, err);
+        throw err;
+      }
+      this._updateTaskCount(task, -1);
+      task._transitionTo(notScheduled, canceling);
+      task.runCount = -1;
+      return task;
+    }
+    _updateTaskCount(task, count) {
+      const zoneDelegates = task._zoneDelegates;
+      if (count == -1) {
+        task._zoneDelegates = null;
+      }
+      for (let i = 0; i < zoneDelegates.length; i++) {
+        zoneDelegates[i]._updateTaskCount(task.type, count);
+      }
+    }
+  }
+  const DELEGATE_ZS = {
+    name: "",
+    onHasTask: (delegate, _, target, hasTaskState) => delegate.hasTask(target, hasTaskState),
+    onScheduleTask: (delegate, _, target, task) => delegate.scheduleTask(target, task),
+    onInvokeTask: (delegate, _, target, task, applyThis, applyArgs) => delegate.invokeTask(target, task, applyThis, applyArgs),
+    onCancelTask: (delegate, _, target, task) => delegate.cancelTask(target, task)
+  };
+  class _ZoneDelegate {
+    get zone() {
+      return this._zone;
+    }
+    constructor(zone, parentDelegate, zoneSpec) {
+      this._taskCounts = {
+        "microTask": 0,
+        "macroTask": 0,
+        "eventTask": 0
+      };
+      this._zone = zone;
+      this._parentDelegate = parentDelegate;
+      this._forkZS = zoneSpec && (zoneSpec && zoneSpec.onFork ? zoneSpec : parentDelegate._forkZS);
+      this._forkDlgt = zoneSpec && (zoneSpec.onFork ? parentDelegate : parentDelegate._forkDlgt);
+      this._forkCurrZone = zoneSpec && (zoneSpec.onFork ? this._zone : parentDelegate._forkCurrZone);
+      this._interceptZS = zoneSpec && (zoneSpec.onIntercept ? zoneSpec : parentDelegate._interceptZS);
+      this._interceptDlgt = zoneSpec && (zoneSpec.onIntercept ? parentDelegate : parentDelegate._interceptDlgt);
+      this._interceptCurrZone = zoneSpec && (zoneSpec.onIntercept ? this._zone : parentDelegate._interceptCurrZone);
+      this._invokeZS = zoneSpec && (zoneSpec.onInvoke ? zoneSpec : parentDelegate._invokeZS);
+      this._invokeDlgt = zoneSpec && (zoneSpec.onInvoke ? parentDelegate : parentDelegate._invokeDlgt);
+      this._invokeCurrZone = zoneSpec && (zoneSpec.onInvoke ? this._zone : parentDelegate._invokeCurrZone);
+      this._handleErrorZS = zoneSpec && (zoneSpec.onHandleError ? zoneSpec : parentDelegate._handleErrorZS);
+      this._handleErrorDlgt = zoneSpec && (zoneSpec.onHandleError ? parentDelegate : parentDelegate._handleErrorDlgt);
+      this._handleErrorCurrZone = zoneSpec && (zoneSpec.onHandleError ? this._zone : parentDelegate._handleErrorCurrZone);
+      this._scheduleTaskZS = zoneSpec && (zoneSpec.onScheduleTask ? zoneSpec : parentDelegate._scheduleTaskZS);
+      this._scheduleTaskDlgt = zoneSpec && (zoneSpec.onScheduleTask ? parentDelegate : parentDelegate._scheduleTaskDlgt);
+      this._scheduleTaskCurrZone = zoneSpec && (zoneSpec.onScheduleTask ? this._zone : parentDelegate._scheduleTaskCurrZone);
+      this._invokeTaskZS = zoneSpec && (zoneSpec.onInvokeTask ? zoneSpec : parentDelegate._invokeTaskZS);
+      this._invokeTaskDlgt = zoneSpec && (zoneSpec.onInvokeTask ? parentDelegate : parentDelegate._invokeTaskDlgt);
+      this._invokeTaskCurrZone = zoneSpec && (zoneSpec.onInvokeTask ? this._zone : parentDelegate._invokeTaskCurrZone);
+      this._cancelTaskZS = zoneSpec && (zoneSpec.onCancelTask ? zoneSpec : parentDelegate._cancelTaskZS);
+      this._cancelTaskDlgt = zoneSpec && (zoneSpec.onCancelTask ? parentDelegate : parentDelegate._cancelTaskDlgt);
+      this._cancelTaskCurrZone = zoneSpec && (zoneSpec.onCancelTask ? this._zone : parentDelegate._cancelTaskCurrZone);
+      this._hasTaskZS = null;
+      this._hasTaskDlgt = null;
+      this._hasTaskDlgtOwner = null;
+      this._hasTaskCurrZone = null;
+      const zoneSpecHasTask = zoneSpec && zoneSpec.onHasTask;
+      const parentHasTask = parentDelegate && parentDelegate._hasTaskZS;
+      if (zoneSpecHasTask || parentHasTask) {
+        this._hasTaskZS = zoneSpecHasTask ? zoneSpec : DELEGATE_ZS;
+        this._hasTaskDlgt = parentDelegate;
+        this._hasTaskDlgtOwner = this;
+        this._hasTaskCurrZone = this._zone;
+        if (!zoneSpec.onScheduleTask) {
+          this._scheduleTaskZS = DELEGATE_ZS;
+          this._scheduleTaskDlgt = parentDelegate;
+          this._scheduleTaskCurrZone = this._zone;
+        }
+        if (!zoneSpec.onInvokeTask) {
+          this._invokeTaskZS = DELEGATE_ZS;
+          this._invokeTaskDlgt = parentDelegate;
+          this._invokeTaskCurrZone = this._zone;
+        }
+        if (!zoneSpec.onCancelTask) {
+          this._cancelTaskZS = DELEGATE_ZS;
+          this._cancelTaskDlgt = parentDelegate;
+          this._cancelTaskCurrZone = this._zone;
+        }
+      }
+    }
+    fork(targetZone, zoneSpec) {
+      return this._forkZS ? this._forkZS.onFork(this._forkDlgt, this.zone, targetZone, zoneSpec) : new ZoneImpl(targetZone, zoneSpec);
+    }
+    intercept(targetZone, callback, source) {
+      return this._interceptZS ? this._interceptZS.onIntercept(this._interceptDlgt, this._interceptCurrZone, targetZone, callback, source) : callback;
+    }
+    invoke(targetZone, callback, applyThis, applyArgs, source) {
+      return this._invokeZS ? this._invokeZS.onInvoke(this._invokeDlgt, this._invokeCurrZone, targetZone, callback, applyThis, applyArgs, source) : callback.apply(applyThis, applyArgs);
+    }
+    handleError(targetZone, error) {
+      return this._handleErrorZS ? this._handleErrorZS.onHandleError(this._handleErrorDlgt, this._handleErrorCurrZone, targetZone, error) : true;
+    }
+    scheduleTask(targetZone, task) {
+      let returnTask = task;
+      if (this._scheduleTaskZS) {
+        if (this._hasTaskZS) {
+          returnTask._zoneDelegates.push(this._hasTaskDlgtOwner);
+        }
+        returnTask = this._scheduleTaskZS.onScheduleTask(this._scheduleTaskDlgt, this._scheduleTaskCurrZone, targetZone, task);
+        if (!returnTask)
+          returnTask = task;
+      } else {
+        if (task.scheduleFn) {
+          task.scheduleFn(task);
+        } else if (task.type == microTask) {
+          scheduleMicroTask(task);
+        } else {
+          throw new Error("Task is missing scheduleFn.");
+        }
+      }
+      return returnTask;
+    }
+    invokeTask(targetZone, task, applyThis, applyArgs) {
+      return this._invokeTaskZS ? this._invokeTaskZS.onInvokeTask(this._invokeTaskDlgt, this._invokeTaskCurrZone, targetZone, task, applyThis, applyArgs) : task.callback.apply(applyThis, applyArgs);
+    }
+    cancelTask(targetZone, task) {
+      let value;
+      if (this._cancelTaskZS) {
+        value = this._cancelTaskZS.onCancelTask(this._cancelTaskDlgt, this._cancelTaskCurrZone, targetZone, task);
+      } else {
+        if (!task.cancelFn) {
+          throw Error("Task is not cancelable");
+        }
+        value = task.cancelFn(task);
+      }
+      return value;
+    }
+    hasTask(targetZone, isEmpty) {
+      try {
+        this._hasTaskZS && this._hasTaskZS.onHasTask(this._hasTaskDlgt, this._hasTaskCurrZone, targetZone, isEmpty);
+      } catch (err) {
+        this.handleError(targetZone, err);
+      }
+    }
+    // tslint:disable-next-line:require-internal-with-underscore
+    _updateTaskCount(type, count) {
+      const counts = this._taskCounts;
+      const prev = counts[type];
+      const next = counts[type] = prev + count;
+      if (next < 0) {
+        throw new Error("More tasks executed then were scheduled.");
+      }
+      if (prev == 0 || next == 0) {
+        const isEmpty = {
+          microTask: counts["microTask"] > 0,
+          macroTask: counts["macroTask"] > 0,
+          eventTask: counts["eventTask"] > 0,
+          change: type
+        };
+        this.hasTask(this._zone, isEmpty);
+      }
+    }
+  }
+  class ZoneTask {
+    constructor(type, source, callback, options, scheduleFn, cancelFn) {
+      this._zone = null;
+      this.runCount = 0;
+      this._zoneDelegates = null;
+      this._state = "notScheduled";
+      this.type = type;
+      this.source = source;
+      this.data = options;
+      this.scheduleFn = scheduleFn;
+      this.cancelFn = cancelFn;
+      if (!callback) {
+        throw new Error("callback is not defined");
+      }
+      this.callback = callback;
+      const self2 = this;
+      if (type === eventTask && options && options.useG) {
+        this.invoke = ZoneTask.invokeTask;
+      } else {
+        this.invoke = function() {
+          return ZoneTask.invokeTask.call(global, self2, this, arguments);
+        };
+      }
+    }
+    static invokeTask(task, target, args) {
+      if (!task) {
+        task = this;
+      }
+      _numberOfNestedTaskFrames++;
+      try {
+        task.runCount++;
+        return task.zone.runTask(task, target, args);
+      } finally {
+        if (_numberOfNestedTaskFrames == 1) {
+          drainMicroTaskQueue();
+        }
+        _numberOfNestedTaskFrames--;
+      }
+    }
+    get zone() {
+      return this._zone;
+    }
+    get state() {
+      return this._state;
+    }
+    cancelScheduleRequest() {
+      this._transitionTo(notScheduled, scheduling);
+    }
+    // tslint:disable-next-line:require-internal-with-underscore
+    _transitionTo(toState, fromState1, fromState2) {
+      if (this._state === fromState1 || this._state === fromState2) {
+        this._state = toState;
+        if (toState == notScheduled) {
+          this._zoneDelegates = null;
+        }
+      } else {
+        throw new Error(`${this.type} '${this.source}': can not transition to '${toState}', expecting state '${fromState1}'${fromState2 ? " or '" + fromState2 + "'" : ""}, was '${this._state}'.`);
+      }
+    }
+    toString() {
+      if (this.data && typeof this.data.handleId !== "undefined") {
+        return this.data.handleId.toString();
+      } else {
+        return Object.prototype.toString.call(this);
+      }
+    }
+    // add toJSON method to prevent cyclic error when
+    // call JSON.stringify(zoneTask)
+    toJSON() {
+      return {
+        type: this.type,
+        state: this.state,
+        source: this.source,
+        zone: this.zone.name,
+        runCount: this.runCount
+      };
+    }
+  }
+  const symbolSetTimeout = __symbol__("setTimeout");
+  const symbolPromise = __symbol__("Promise");
+  const symbolThen = __symbol__("then");
+  let _microTaskQueue = [];
+  let _isDrainingMicrotaskQueue = false;
+  let nativeMicroTaskQueuePromise;
+  function nativeScheduleMicroTask(func) {
+    if (!nativeMicroTaskQueuePromise) {
+      if (global[symbolPromise]) {
+        nativeMicroTaskQueuePromise = global[symbolPromise].resolve(0);
+      }
+    }
+    if (nativeMicroTaskQueuePromise) {
+      let nativeThen = nativeMicroTaskQueuePromise[symbolThen];
+      if (!nativeThen) {
+        nativeThen = nativeMicroTaskQueuePromise["then"];
+      }
+      nativeThen.call(nativeMicroTaskQueuePromise, func);
+    } else {
+      global[symbolSetTimeout](func, 0);
+    }
+  }
+  function scheduleMicroTask(task) {
+    if (_numberOfNestedTaskFrames === 0 && _microTaskQueue.length === 0) {
+      nativeScheduleMicroTask(drainMicroTaskQueue);
+    }
+    task && _microTaskQueue.push(task);
+  }
+  function drainMicroTaskQueue() {
+    if (!_isDrainingMicrotaskQueue) {
+      _isDrainingMicrotaskQueue = true;
+      while (_microTaskQueue.length) {
+        const queue = _microTaskQueue;
+        _microTaskQueue = [];
+        for (let i = 0; i < queue.length; i++) {
+          const task = queue[i];
+          try {
+            task.zone.runTask(task, null, null);
+          } catch (error) {
+            _api.onUnhandledError(error);
+          }
+        }
+      }
+      _api.microtaskDrainDone();
+      _isDrainingMicrotaskQueue = false;
+    }
+  }
+  const NO_ZONE = { name: "NO ZONE" };
+  const notScheduled = "notScheduled", scheduling = "scheduling", scheduled2 = "scheduled", running = "running", canceling = "canceling", unknown = "unknown";
+  const microTask = "microTask", macroTask = "macroTask", eventTask = "eventTask";
+  const patches = {};
+  const _api = {
+    symbol: __symbol__,
+    currentZoneFrame: () => _currentZoneFrame,
+    onUnhandledError: noop3,
+    microtaskDrainDone: noop3,
+    scheduleMicroTask,
+    showUncaughtError: () => !ZoneImpl[__symbol__("ignoreConsoleErrorUncaughtError")],
+    patchEventTarget: () => [],
+    patchOnProperties: noop3,
+    patchMethod: () => noop3,
+    bindArguments: () => [],
+    patchThen: () => noop3,
+    patchMacroTask: () => noop3,
+    patchEventPrototype: () => noop3,
+    isIEOrEdge: () => false,
+    getGlobalObjects: () => void 0,
+    ObjectDefineProperty: () => noop3,
+    ObjectGetOwnPropertyDescriptor: () => void 0,
+    ObjectCreate: () => void 0,
+    ArraySlice: () => [],
+    patchClass: () => noop3,
+    wrapWithCurrentZone: () => noop3,
+    filterProperties: () => [],
+    attachOriginToPatched: () => noop3,
+    _redefineProperty: () => noop3,
+    patchCallbacks: () => noop3,
+    nativeScheduleMicroTask
+  };
+  let _currentZoneFrame = { parent: null, zone: new ZoneImpl(null, null) };
+  let _currentTask = null;
+  let _numberOfNestedTaskFrames = 0;
+  function noop3() {
+  }
+  performanceMeasure("Zone", "Zone");
+  return ZoneImpl;
+}
+function loadZone() {
+  const global2 = globalThis;
+  const checkDuplicate = global2[__symbol__("forceDuplicateZoneCheck")] === true;
+  if (global2["Zone"] && (checkDuplicate || typeof global2["Zone"].__symbol__ !== "function")) {
+    throw new Error("Zone already loaded.");
+  }
+  global2["Zone"] ??= initZone();
+  return global2["Zone"];
+}
+var ObjectGetOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+var ObjectDefineProperty = Object.defineProperty;
+var ObjectGetPrototypeOf = Object.getPrototypeOf;
+var ObjectCreate = Object.create;
+var ArraySlice = Array.prototype.slice;
+var ADD_EVENT_LISTENER_STR = "addEventListener";
+var REMOVE_EVENT_LISTENER_STR = "removeEventListener";
+var ZONE_SYMBOL_ADD_EVENT_LISTENER = __symbol__(ADD_EVENT_LISTENER_STR);
+var ZONE_SYMBOL_REMOVE_EVENT_LISTENER = __symbol__(REMOVE_EVENT_LISTENER_STR);
+var TRUE_STR = "true";
+var FALSE_STR = "false";
+var ZONE_SYMBOL_PREFIX = __symbol__("");
+function wrapWithCurrentZone(callback, source) {
+  return Zone.current.wrap(callback, source);
+}
+function scheduleMacroTaskWithCurrentZone(source, callback, data, customSchedule, customCancel) {
+  return Zone.current.scheduleMacroTask(source, callback, data, customSchedule, customCancel);
+}
+var zoneSymbol = __symbol__;
+var isWindowExists = typeof window !== "undefined";
+var internalWindow = isWindowExists ? window : void 0;
+var _global = isWindowExists && internalWindow || globalThis;
+var REMOVE_ATTRIBUTE = "removeAttribute";
+function bindArguments(args, source) {
+  for (let i = args.length - 1; i >= 0; i--) {
+    if (typeof args[i] === "function") {
+      args[i] = wrapWithCurrentZone(args[i], source + "_" + i);
+    }
+  }
+  return args;
+}
+function patchPrototype(prototype, fnNames) {
+  const source = prototype.constructor["name"];
+  for (let i = 0; i < fnNames.length; i++) {
+    const name = fnNames[i];
+    const delegate = prototype[name];
+    if (delegate) {
+      const prototypeDesc = ObjectGetOwnPropertyDescriptor(prototype, name);
+      if (!isPropertyWritable(prototypeDesc)) {
+        continue;
+      }
+      prototype[name] = ((delegate2) => {
+        const patched = function() {
+          return delegate2.apply(this, bindArguments(arguments, source + "." + name));
+        };
+        attachOriginToPatched(patched, delegate2);
+        return patched;
+      })(delegate);
+    }
+  }
+}
+function isPropertyWritable(propertyDesc) {
+  if (!propertyDesc) {
+    return true;
+  }
+  if (propertyDesc.writable === false) {
+    return false;
+  }
+  return !(typeof propertyDesc.get === "function" && typeof propertyDesc.set === "undefined");
+}
+var isWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
+var isNode = !("nw" in _global) && typeof _global.process !== "undefined" && _global.process.toString() === "[object process]";
+var isBrowser = !isNode && !isWebWorker && !!(isWindowExists && internalWindow["HTMLElement"]);
+var isMix = typeof _global.process !== "undefined" && _global.process.toString() === "[object process]" && !isWebWorker && !!(isWindowExists && internalWindow["HTMLElement"]);
+var zoneSymbolEventNames$1 = {};
+var enableBeforeunloadSymbol = zoneSymbol("enable_beforeunload");
+var wrapFn = function(event) {
+  event = event || _global.event;
+  if (!event) {
+    return;
+  }
+  let eventNameSymbol = zoneSymbolEventNames$1[event.type];
+  if (!eventNameSymbol) {
+    eventNameSymbol = zoneSymbolEventNames$1[event.type] = zoneSymbol("ON_PROPERTY" + event.type);
+  }
+  const target = this || event.target || _global;
+  const listener = target[eventNameSymbol];
+  let result;
+  if (isBrowser && target === internalWindow && event.type === "error") {
+    const errorEvent = event;
+    result = listener && listener.call(this, errorEvent.message, errorEvent.filename, errorEvent.lineno, errorEvent.colno, errorEvent.error);
+    if (result === true) {
+      event.preventDefault();
+    }
+  } else {
+    result = listener && listener.apply(this, arguments);
+    if (
+      // https://github.com/angular/angular/issues/47579
+      // https://www.w3.org/TR/2011/WD-html5-20110525/history.html#beforeunloadevent
+      // This is the only specific case we should check for. The spec defines that the
+      // `returnValue` attribute represents the message to show the user. When the event
+      // is created, this attribute must be set to the empty string.
+      event.type === "beforeunload" && // To prevent any breaking changes resulting from this change, given that
+      // it was already causing a significant number of failures in G3, we have hidden
+      // that behavior behind a global configuration flag. Consumers can enable this
+      // flag explicitly if they want the `beforeunload` event to be handled as defined
+      // in the specification.
+      _global[enableBeforeunloadSymbol] && // The IDL event definition is `attribute DOMString returnValue`, so we check whether
+      // `typeof result` is a string.
+      typeof result === "string"
+    ) {
+      event.returnValue = result;
+    } else if (result != void 0 && !result) {
+      event.preventDefault();
+    }
+  }
+  return result;
+};
+function patchProperty(obj, prop, prototype) {
+  let desc = ObjectGetOwnPropertyDescriptor(obj, prop);
+  if (!desc && prototype) {
+    const prototypeDesc = ObjectGetOwnPropertyDescriptor(prototype, prop);
+    if (prototypeDesc) {
+      desc = { enumerable: true, configurable: true };
+    }
+  }
+  if (!desc || !desc.configurable) {
+    return;
+  }
+  const onPropPatchedSymbol = zoneSymbol("on" + prop + "patched");
+  if (obj.hasOwnProperty(onPropPatchedSymbol) && obj[onPropPatchedSymbol]) {
+    return;
+  }
+  delete desc.writable;
+  delete desc.value;
+  const originalDescGet = desc.get;
+  const originalDescSet = desc.set;
+  const eventName = prop.slice(2);
+  let eventNameSymbol = zoneSymbolEventNames$1[eventName];
+  if (!eventNameSymbol) {
+    eventNameSymbol = zoneSymbolEventNames$1[eventName] = zoneSymbol("ON_PROPERTY" + eventName);
+  }
+  desc.set = function(newValue) {
+    let target = this;
+    if (!target && obj === _global) {
+      target = _global;
+    }
+    if (!target) {
+      return;
+    }
+    const previousValue = target[eventNameSymbol];
+    if (typeof previousValue === "function") {
+      target.removeEventListener(eventName, wrapFn);
+    }
+    originalDescSet && originalDescSet.call(target, null);
+    target[eventNameSymbol] = newValue;
+    if (typeof newValue === "function") {
+      target.addEventListener(eventName, wrapFn, false);
+    }
+  };
+  desc.get = function() {
+    let target = this;
+    if (!target && obj === _global) {
+      target = _global;
+    }
+    if (!target) {
+      return null;
+    }
+    const listener = target[eventNameSymbol];
+    if (listener) {
+      return listener;
+    } else if (originalDescGet) {
+      let value = originalDescGet.call(this);
+      if (value) {
+        desc.set.call(this, value);
+        if (typeof target[REMOVE_ATTRIBUTE] === "function") {
+          target.removeAttribute(prop);
+        }
+        return value;
+      }
+    }
+    return null;
+  };
+  ObjectDefineProperty(obj, prop, desc);
+  obj[onPropPatchedSymbol] = true;
+}
+function patchOnProperties(obj, properties, prototype) {
+  if (properties) {
+    for (let i = 0; i < properties.length; i++) {
+      patchProperty(obj, "on" + properties[i], prototype);
+    }
+  } else {
+    const onProperties = [];
+    for (const prop in obj) {
+      if (prop.slice(0, 2) == "on") {
+        onProperties.push(prop);
+      }
+    }
+    for (let j = 0; j < onProperties.length; j++) {
+      patchProperty(obj, onProperties[j], prototype);
+    }
+  }
+}
+var originalInstanceKey = zoneSymbol("originalInstance");
+function patchClass(className) {
+  const OriginalClass = _global[className];
+  if (!OriginalClass)
+    return;
+  _global[zoneSymbol(className)] = OriginalClass;
+  _global[className] = function() {
+    const a = bindArguments(arguments, className);
+    switch (a.length) {
+      case 0:
+        this[originalInstanceKey] = new OriginalClass();
+        break;
+      case 1:
+        this[originalInstanceKey] = new OriginalClass(a[0]);
+        break;
+      case 2:
+        this[originalInstanceKey] = new OriginalClass(a[0], a[1]);
+        break;
+      case 3:
+        this[originalInstanceKey] = new OriginalClass(a[0], a[1], a[2]);
+        break;
+      case 4:
+        this[originalInstanceKey] = new OriginalClass(a[0], a[1], a[2], a[3]);
+        break;
+      default:
+        throw new Error("Arg list too long.");
+    }
+  };
+  attachOriginToPatched(_global[className], OriginalClass);
+  const instance = new OriginalClass(function() {
+  });
+  let prop;
+  for (prop in instance) {
+    if (className === "XMLHttpRequest" && prop === "responseBlob")
+      continue;
+    (function(prop2) {
+      if (typeof instance[prop2] === "function") {
+        _global[className].prototype[prop2] = function() {
+          return this[originalInstanceKey][prop2].apply(this[originalInstanceKey], arguments);
+        };
+      } else {
+        ObjectDefineProperty(_global[className].prototype, prop2, {
+          set: function(fn) {
+            if (typeof fn === "function") {
+              this[originalInstanceKey][prop2] = wrapWithCurrentZone(fn, className + "." + prop2);
+              attachOriginToPatched(this[originalInstanceKey][prop2], fn);
+            } else {
+              this[originalInstanceKey][prop2] = fn;
+            }
+          },
+          get: function() {
+            return this[originalInstanceKey][prop2];
+          }
+        });
+      }
+    })(prop);
+  }
+  for (prop in OriginalClass) {
+    if (prop !== "prototype" && OriginalClass.hasOwnProperty(prop)) {
+      _global[className][prop] = OriginalClass[prop];
+    }
+  }
+}
+function patchMethod(target, name, patchFn) {
+  let proto = target;
+  while (proto && !proto.hasOwnProperty(name)) {
+    proto = ObjectGetPrototypeOf(proto);
+  }
+  if (!proto && target[name]) {
+    proto = target;
+  }
+  const delegateName = zoneSymbol(name);
+  let delegate = null;
+  if (proto && (!(delegate = proto[delegateName]) || !proto.hasOwnProperty(delegateName))) {
+    delegate = proto[delegateName] = proto[name];
+    const desc = proto && ObjectGetOwnPropertyDescriptor(proto, name);
+    if (isPropertyWritable(desc)) {
+      const patchDelegate = patchFn(delegate, delegateName, name);
+      proto[name] = function() {
+        return patchDelegate(this, arguments);
+      };
+      attachOriginToPatched(proto[name], delegate);
+    }
+  }
+  return delegate;
+}
+function patchMacroTask(obj, funcName, metaCreator) {
+  let setNative = null;
+  function scheduleTask(task) {
+    const data = task.data;
+    data.args[data.cbIdx] = function() {
+      task.invoke.apply(this, arguments);
+    };
+    setNative.apply(data.target, data.args);
+    return task;
+  }
+  setNative = patchMethod(obj, funcName, (delegate) => function(self2, args) {
+    const meta = metaCreator(self2, args);
+    if (meta.cbIdx >= 0 && typeof args[meta.cbIdx] === "function") {
+      return scheduleMacroTaskWithCurrentZone(meta.name, args[meta.cbIdx], meta, scheduleTask);
+    } else {
+      return delegate.apply(self2, args);
+    }
+  });
+}
+function attachOriginToPatched(patched, original) {
+  patched[zoneSymbol("OriginalDelegate")] = original;
+}
+var isDetectedIEOrEdge = false;
+var ieOrEdge = false;
+function isIE() {
+  try {
+    const ua = internalWindow.navigator.userAgent;
+    if (ua.indexOf("MSIE ") !== -1 || ua.indexOf("Trident/") !== -1) {
+      return true;
+    }
+  } catch (error) {
+  }
+  return false;
+}
+function isIEOrEdge() {
+  if (isDetectedIEOrEdge) {
+    return ieOrEdge;
+  }
+  isDetectedIEOrEdge = true;
+  try {
+    const ua = internalWindow.navigator.userAgent;
+    if (ua.indexOf("MSIE ") !== -1 || ua.indexOf("Trident/") !== -1 || ua.indexOf("Edge/") !== -1) {
+      ieOrEdge = true;
+    }
+  } catch (error) {
+  }
+  return ieOrEdge;
+}
+function isFunction(value) {
+  return typeof value === "function";
+}
+function isNumber(value) {
+  return typeof value === "number";
+}
+var passiveSupported = false;
+if (typeof window !== "undefined") {
+  try {
+    const options = Object.defineProperty({}, "passive", {
+      get: function() {
+        passiveSupported = true;
+      }
+    });
+    window.addEventListener("test", options, options);
+    window.removeEventListener("test", options, options);
+  } catch (err) {
+    passiveSupported = false;
+  }
+}
+var OPTIMIZED_ZONE_EVENT_TASK_DATA = {
+  useG: true
+};
+var zoneSymbolEventNames = {};
+var globalSources = {};
+var EVENT_NAME_SYMBOL_REGX = new RegExp("^" + ZONE_SYMBOL_PREFIX + "(\\w+)(true|false)$");
+var IMMEDIATE_PROPAGATION_SYMBOL = zoneSymbol("propagationStopped");
+function prepareEventNames(eventName, eventNameToString) {
+  const falseEventName = (eventNameToString ? eventNameToString(eventName) : eventName) + FALSE_STR;
+  const trueEventName = (eventNameToString ? eventNameToString(eventName) : eventName) + TRUE_STR;
+  const symbol = ZONE_SYMBOL_PREFIX + falseEventName;
+  const symbolCapture = ZONE_SYMBOL_PREFIX + trueEventName;
+  zoneSymbolEventNames[eventName] = {};
+  zoneSymbolEventNames[eventName][FALSE_STR] = symbol;
+  zoneSymbolEventNames[eventName][TRUE_STR] = symbolCapture;
+}
+function patchEventTarget(_global3, api, apis, patchOptions) {
+  const ADD_EVENT_LISTENER = patchOptions && patchOptions.add || ADD_EVENT_LISTENER_STR;
+  const REMOVE_EVENT_LISTENER = patchOptions && patchOptions.rm || REMOVE_EVENT_LISTENER_STR;
+  const LISTENERS_EVENT_LISTENER = patchOptions && patchOptions.listeners || "eventListeners";
+  const REMOVE_ALL_LISTENERS_EVENT_LISTENER = patchOptions && patchOptions.rmAll || "removeAllListeners";
+  const zoneSymbolAddEventListener = zoneSymbol(ADD_EVENT_LISTENER);
+  const ADD_EVENT_LISTENER_SOURCE = "." + ADD_EVENT_LISTENER + ":";
+  const PREPEND_EVENT_LISTENER = "prependListener";
+  const PREPEND_EVENT_LISTENER_SOURCE = "." + PREPEND_EVENT_LISTENER + ":";
+  const invokeTask = function(task, target, event) {
+    if (task.isRemoved) {
+      return;
+    }
+    const delegate = task.callback;
+    if (typeof delegate === "object" && delegate.handleEvent) {
+      task.callback = (event2) => delegate.handleEvent(event2);
+      task.originalDelegate = delegate;
+    }
+    let error;
+    try {
+      task.invoke(task, target, [event]);
+    } catch (err) {
+      error = err;
+    }
+    const options = task.options;
+    if (options && typeof options === "object" && options.once) {
+      const delegate2 = task.originalDelegate ? task.originalDelegate : task.callback;
+      target[REMOVE_EVENT_LISTENER].call(target, event.type, delegate2, options);
+    }
+    return error;
+  };
+  function globalCallback(context2, event, isCapture) {
+    event = event || _global3.event;
+    if (!event) {
+      return;
+    }
+    const target = context2 || event.target || _global3;
+    const tasks = target[zoneSymbolEventNames[event.type][isCapture ? TRUE_STR : FALSE_STR]];
+    if (tasks) {
+      const errors = [];
+      if (tasks.length === 1) {
+        const err = invokeTask(tasks[0], target, event);
+        err && errors.push(err);
+      } else {
+        const copyTasks = tasks.slice();
+        for (let i = 0; i < copyTasks.length; i++) {
+          if (event && event[IMMEDIATE_PROPAGATION_SYMBOL] === true) {
+            break;
+          }
+          const err = invokeTask(copyTasks[i], target, event);
+          err && errors.push(err);
+        }
+      }
+      if (errors.length === 1) {
+        throw errors[0];
+      } else {
+        for (let i = 0; i < errors.length; i++) {
+          const err = errors[i];
+          api.nativeScheduleMicroTask(() => {
+            throw err;
+          });
+        }
+      }
+    }
+  }
+  const globalZoneAwareCallback = function(event) {
+    return globalCallback(this, event, false);
+  };
+  const globalZoneAwareCaptureCallback = function(event) {
+    return globalCallback(this, event, true);
+  };
+  function patchEventTargetMethods(obj, patchOptions2) {
+    if (!obj) {
+      return false;
+    }
+    let useGlobalCallback = true;
+    if (patchOptions2 && patchOptions2.useG !== void 0) {
+      useGlobalCallback = patchOptions2.useG;
+    }
+    const validateHandler = patchOptions2 && patchOptions2.vh;
+    let checkDuplicate = true;
+    if (patchOptions2 && patchOptions2.chkDup !== void 0) {
+      checkDuplicate = patchOptions2.chkDup;
+    }
+    let returnTarget = false;
+    if (patchOptions2 && patchOptions2.rt !== void 0) {
+      returnTarget = patchOptions2.rt;
+    }
+    let proto = obj;
+    while (proto && !proto.hasOwnProperty(ADD_EVENT_LISTENER)) {
+      proto = ObjectGetPrototypeOf(proto);
+    }
+    if (!proto && obj[ADD_EVENT_LISTENER]) {
+      proto = obj;
+    }
+    if (!proto) {
+      return false;
+    }
+    if (proto[zoneSymbolAddEventListener]) {
+      return false;
+    }
+    const eventNameToString = patchOptions2 && patchOptions2.eventNameToString;
+    const taskData = {};
+    const nativeAddEventListener = proto[zoneSymbolAddEventListener] = proto[ADD_EVENT_LISTENER];
+    const nativeRemoveEventListener = proto[zoneSymbol(REMOVE_EVENT_LISTENER)] = proto[REMOVE_EVENT_LISTENER];
+    const nativeListeners = proto[zoneSymbol(LISTENERS_EVENT_LISTENER)] = proto[LISTENERS_EVENT_LISTENER];
+    const nativeRemoveAllListeners = proto[zoneSymbol(REMOVE_ALL_LISTENERS_EVENT_LISTENER)] = proto[REMOVE_ALL_LISTENERS_EVENT_LISTENER];
+    let nativePrependEventListener;
+    if (patchOptions2 && patchOptions2.prepend) {
+      nativePrependEventListener = proto[zoneSymbol(patchOptions2.prepend)] = proto[patchOptions2.prepend];
+    }
+    function buildEventListenerOptions(options, passive) {
+      if (!passiveSupported && typeof options === "object" && options) {
+        return !!options.capture;
+      }
+      if (!passiveSupported || !passive) {
+        return options;
+      }
+      if (typeof options === "boolean") {
+        return { capture: options, passive: true };
+      }
+      if (!options) {
+        return { passive: true };
+      }
+      if (typeof options === "object" && options.passive !== false) {
+        return __spreadProps(__spreadValues({}, options), { passive: true });
+      }
+      return options;
+    }
+    const customScheduleGlobal = function(task) {
+      if (taskData.isExisting) {
+        return;
+      }
+      return nativeAddEventListener.call(taskData.target, taskData.eventName, taskData.capture ? globalZoneAwareCaptureCallback : globalZoneAwareCallback, taskData.options);
+    };
+    const customCancelGlobal = function(task) {
+      if (!task.isRemoved) {
+        const symbolEventNames = zoneSymbolEventNames[task.eventName];
+        let symbolEventName;
+        if (symbolEventNames) {
+          symbolEventName = symbolEventNames[task.capture ? TRUE_STR : FALSE_STR];
+        }
+        const existingTasks = symbolEventName && task.target[symbolEventName];
+        if (existingTasks) {
+          for (let i = 0; i < existingTasks.length; i++) {
+            const existingTask = existingTasks[i];
+            if (existingTask === task) {
+              existingTasks.splice(i, 1);
+              task.isRemoved = true;
+              if (task.removeAbortListener) {
+                task.removeAbortListener();
+                task.removeAbortListener = null;
+              }
+              if (existingTasks.length === 0) {
+                task.allRemoved = true;
+                task.target[symbolEventName] = null;
+              }
+              break;
+            }
+          }
+        }
+      }
+      if (!task.allRemoved) {
+        return;
+      }
+      return nativeRemoveEventListener.call(task.target, task.eventName, task.capture ? globalZoneAwareCaptureCallback : globalZoneAwareCallback, task.options);
+    };
+    const customScheduleNonGlobal = function(task) {
+      return nativeAddEventListener.call(taskData.target, taskData.eventName, task.invoke, taskData.options);
+    };
+    const customSchedulePrepend = function(task) {
+      return nativePrependEventListener.call(taskData.target, taskData.eventName, task.invoke, taskData.options);
+    };
+    const customCancelNonGlobal = function(task) {
+      return nativeRemoveEventListener.call(task.target, task.eventName, task.invoke, task.options);
+    };
+    const customSchedule = useGlobalCallback ? customScheduleGlobal : customScheduleNonGlobal;
+    const customCancel = useGlobalCallback ? customCancelGlobal : customCancelNonGlobal;
+    const compareTaskCallbackVsDelegate = function(task, delegate) {
+      const typeOfDelegate = typeof delegate;
+      return typeOfDelegate === "function" && task.callback === delegate || typeOfDelegate === "object" && task.originalDelegate === delegate;
+    };
+    const compare2 = patchOptions2 && patchOptions2.diff ? patchOptions2.diff : compareTaskCallbackVsDelegate;
+    const unpatchedEvents = Zone[zoneSymbol("UNPATCHED_EVENTS")];
+    const passiveEvents = _global3[zoneSymbol("PASSIVE_EVENTS")];
+    function copyEventListenerOptions(options) {
+      if (typeof options === "object" && options !== null) {
+        const newOptions = __spreadValues({}, options);
+        if (options.signal) {
+          newOptions.signal = options.signal;
+        }
+        return newOptions;
+      }
+      return options;
+    }
+    const makeAddListener = function(nativeListener, addSource, customScheduleFn, customCancelFn, returnTarget2 = false, prepend = false) {
+      return function() {
+        const target = this || _global3;
+        let eventName = arguments[0];
+        if (patchOptions2 && patchOptions2.transferEventName) {
+          eventName = patchOptions2.transferEventName(eventName);
+        }
+        let delegate = arguments[1];
+        if (!delegate) {
+          return nativeListener.apply(this, arguments);
+        }
+        if (isNode && eventName === "uncaughtException") {
+          return nativeListener.apply(this, arguments);
+        }
+        let isHandleEvent = false;
+        if (typeof delegate !== "function") {
+          if (!delegate.handleEvent) {
+            return nativeListener.apply(this, arguments);
+          }
+          isHandleEvent = true;
+        }
+        if (validateHandler && !validateHandler(nativeListener, delegate, target, arguments)) {
+          return;
+        }
+        const passive = passiveSupported && !!passiveEvents && passiveEvents.indexOf(eventName) !== -1;
+        const options = copyEventListenerOptions(buildEventListenerOptions(arguments[2], passive));
+        const signal2 = options?.signal;
+        if (signal2?.aborted) {
+          return;
+        }
+        if (unpatchedEvents) {
+          for (let i = 0; i < unpatchedEvents.length; i++) {
+            if (eventName === unpatchedEvents[i]) {
+              if (passive) {
+                return nativeListener.call(target, eventName, delegate, options);
+              } else {
+                return nativeListener.apply(this, arguments);
+              }
+            }
+          }
+        }
+        const capture = !options ? false : typeof options === "boolean" ? true : options.capture;
+        const once = options && typeof options === "object" ? options.once : false;
+        const zone = Zone.current;
+        let symbolEventNames = zoneSymbolEventNames[eventName];
+        if (!symbolEventNames) {
+          prepareEventNames(eventName, eventNameToString);
+          symbolEventNames = zoneSymbolEventNames[eventName];
+        }
+        const symbolEventName = symbolEventNames[capture ? TRUE_STR : FALSE_STR];
+        let existingTasks = target[symbolEventName];
+        let isExisting = false;
+        if (existingTasks) {
+          isExisting = true;
+          if (checkDuplicate) {
+            for (let i = 0; i < existingTasks.length; i++) {
+              if (compare2(existingTasks[i], delegate)) {
+                return;
+              }
+            }
+          }
+        } else {
+          existingTasks = target[symbolEventName] = [];
+        }
+        let source;
+        const constructorName = target.constructor["name"];
+        const targetSource = globalSources[constructorName];
+        if (targetSource) {
+          source = targetSource[eventName];
+        }
+        if (!source) {
+          source = constructorName + addSource + (eventNameToString ? eventNameToString(eventName) : eventName);
+        }
+        taskData.options = options;
+        if (once) {
+          taskData.options.once = false;
+        }
+        taskData.target = target;
+        taskData.capture = capture;
+        taskData.eventName = eventName;
+        taskData.isExisting = isExisting;
+        const data = useGlobalCallback ? OPTIMIZED_ZONE_EVENT_TASK_DATA : void 0;
+        if (data) {
+          data.taskData = taskData;
+        }
+        if (signal2) {
+          taskData.options.signal = void 0;
+        }
+        const task = zone.scheduleEventTask(source, delegate, data, customScheduleFn, customCancelFn);
+        if (signal2) {
+          taskData.options.signal = signal2;
+          const onAbort = () => task.zone.cancelTask(task);
+          nativeListener.call(signal2, "abort", onAbort, { once: true });
+          task.removeAbortListener = () => signal2.removeEventListener("abort", onAbort);
+        }
+        taskData.target = null;
+        if (data) {
+          data.taskData = null;
+        }
+        if (once) {
+          taskData.options.once = true;
+        }
+        if (!(!passiveSupported && typeof task.options === "boolean")) {
+          task.options = options;
+        }
+        task.target = target;
+        task.capture = capture;
+        task.eventName = eventName;
+        if (isHandleEvent) {
+          task.originalDelegate = delegate;
+        }
+        if (!prepend) {
+          existingTasks.push(task);
+        } else {
+          existingTasks.unshift(task);
+        }
+        if (returnTarget2) {
+          return target;
+        }
+      };
+    };
+    proto[ADD_EVENT_LISTENER] = makeAddListener(nativeAddEventListener, ADD_EVENT_LISTENER_SOURCE, customSchedule, customCancel, returnTarget);
+    if (nativePrependEventListener) {
+      proto[PREPEND_EVENT_LISTENER] = makeAddListener(nativePrependEventListener, PREPEND_EVENT_LISTENER_SOURCE, customSchedulePrepend, customCancel, returnTarget, true);
+    }
+    proto[REMOVE_EVENT_LISTENER] = function() {
+      const target = this || _global3;
+      let eventName = arguments[0];
+      if (patchOptions2 && patchOptions2.transferEventName) {
+        eventName = patchOptions2.transferEventName(eventName);
+      }
+      const options = arguments[2];
+      const capture = !options ? false : typeof options === "boolean" ? true : options.capture;
+      const delegate = arguments[1];
+      if (!delegate) {
+        return nativeRemoveEventListener.apply(this, arguments);
+      }
+      if (validateHandler && !validateHandler(nativeRemoveEventListener, delegate, target, arguments)) {
+        return;
+      }
+      const symbolEventNames = zoneSymbolEventNames[eventName];
+      let symbolEventName;
+      if (symbolEventNames) {
+        symbolEventName = symbolEventNames[capture ? TRUE_STR : FALSE_STR];
+      }
+      const existingTasks = symbolEventName && target[symbolEventName];
+      if (existingTasks) {
+        for (let i = 0; i < existingTasks.length; i++) {
+          const existingTask = existingTasks[i];
+          if (compare2(existingTask, delegate)) {
+            existingTasks.splice(i, 1);
+            existingTask.isRemoved = true;
+            if (existingTasks.length === 0) {
+              existingTask.allRemoved = true;
+              target[symbolEventName] = null;
+              if (!capture && typeof eventName === "string") {
+                const onPropertySymbol = ZONE_SYMBOL_PREFIX + "ON_PROPERTY" + eventName;
+                target[onPropertySymbol] = null;
+              }
+            }
+            existingTask.zone.cancelTask(existingTask);
+            if (returnTarget) {
+              return target;
+            }
+            return;
+          }
+        }
+      }
+      return nativeRemoveEventListener.apply(this, arguments);
+    };
+    proto[LISTENERS_EVENT_LISTENER] = function() {
+      const target = this || _global3;
+      let eventName = arguments[0];
+      if (patchOptions2 && patchOptions2.transferEventName) {
+        eventName = patchOptions2.transferEventName(eventName);
+      }
+      const listeners = [];
+      const tasks = findEventTasks(target, eventNameToString ? eventNameToString(eventName) : eventName);
+      for (let i = 0; i < tasks.length; i++) {
+        const task = tasks[i];
+        let delegate = task.originalDelegate ? task.originalDelegate : task.callback;
+        listeners.push(delegate);
+      }
+      return listeners;
+    };
+    proto[REMOVE_ALL_LISTENERS_EVENT_LISTENER] = function() {
+      const target = this || _global3;
+      let eventName = arguments[0];
+      if (!eventName) {
+        const keys = Object.keys(target);
+        for (let i = 0; i < keys.length; i++) {
+          const prop = keys[i];
+          const match2 = EVENT_NAME_SYMBOL_REGX.exec(prop);
+          let evtName = match2 && match2[1];
+          if (evtName && evtName !== "removeListener") {
+            this[REMOVE_ALL_LISTENERS_EVENT_LISTENER].call(this, evtName);
+          }
+        }
+        this[REMOVE_ALL_LISTENERS_EVENT_LISTENER].call(this, "removeListener");
+      } else {
+        if (patchOptions2 && patchOptions2.transferEventName) {
+          eventName = patchOptions2.transferEventName(eventName);
+        }
+        const symbolEventNames = zoneSymbolEventNames[eventName];
+        if (symbolEventNames) {
+          const symbolEventName = symbolEventNames[FALSE_STR];
+          const symbolCaptureEventName = symbolEventNames[TRUE_STR];
+          const tasks = target[symbolEventName];
+          const captureTasks = target[symbolCaptureEventName];
+          if (tasks) {
+            const removeTasks = tasks.slice();
+            for (let i = 0; i < removeTasks.length; i++) {
+              const task = removeTasks[i];
+              let delegate = task.originalDelegate ? task.originalDelegate : task.callback;
+              this[REMOVE_EVENT_LISTENER].call(this, eventName, delegate, task.options);
+            }
+          }
+          if (captureTasks) {
+            const removeTasks = captureTasks.slice();
+            for (let i = 0; i < removeTasks.length; i++) {
+              const task = removeTasks[i];
+              let delegate = task.originalDelegate ? task.originalDelegate : task.callback;
+              this[REMOVE_EVENT_LISTENER].call(this, eventName, delegate, task.options);
+            }
+          }
+        }
+      }
+      if (returnTarget) {
+        return this;
+      }
+    };
+    attachOriginToPatched(proto[ADD_EVENT_LISTENER], nativeAddEventListener);
+    attachOriginToPatched(proto[REMOVE_EVENT_LISTENER], nativeRemoveEventListener);
+    if (nativeRemoveAllListeners) {
+      attachOriginToPatched(proto[REMOVE_ALL_LISTENERS_EVENT_LISTENER], nativeRemoveAllListeners);
+    }
+    if (nativeListeners) {
+      attachOriginToPatched(proto[LISTENERS_EVENT_LISTENER], nativeListeners);
+    }
+    return true;
+  }
+  let results = [];
+  for (let i = 0; i < apis.length; i++) {
+    results[i] = patchEventTargetMethods(apis[i], patchOptions);
+  }
+  return results;
+}
+function findEventTasks(target, eventName) {
+  if (!eventName) {
+    const foundTasks = [];
+    for (let prop in target) {
+      const match2 = EVENT_NAME_SYMBOL_REGX.exec(prop);
+      let evtName = match2 && match2[1];
+      if (evtName && (!eventName || evtName === eventName)) {
+        const tasks = target[prop];
+        if (tasks) {
+          for (let i = 0; i < tasks.length; i++) {
+            foundTasks.push(tasks[i]);
+          }
+        }
+      }
+    }
+    return foundTasks;
+  }
+  let symbolEventName = zoneSymbolEventNames[eventName];
+  if (!symbolEventName) {
+    prepareEventNames(eventName);
+    symbolEventName = zoneSymbolEventNames[eventName];
+  }
+  const captureFalseTasks = target[symbolEventName[FALSE_STR]];
+  const captureTrueTasks = target[symbolEventName[TRUE_STR]];
+  if (!captureFalseTasks) {
+    return captureTrueTasks ? captureTrueTasks.slice() : [];
+  } else {
+    return captureTrueTasks ? captureFalseTasks.concat(captureTrueTasks) : captureFalseTasks.slice();
+  }
+}
+function patchEventPrototype(global2, api) {
+  const Event = global2["Event"];
+  if (Event && Event.prototype) {
+    api.patchMethod(Event.prototype, "stopImmediatePropagation", (delegate) => function(self2, args) {
+      self2[IMMEDIATE_PROPAGATION_SYMBOL] = true;
+      delegate && delegate.apply(self2, args);
+    });
+  }
+}
+function patchQueueMicrotask(global2, api) {
+  api.patchMethod(global2, "queueMicrotask", (delegate) => {
+    return function(self2, args) {
+      Zone.current.scheduleMicroTask("queueMicrotask", args[0]);
+    };
+  });
+}
+var taskSymbol = zoneSymbol("zoneTask");
+function patchTimer(window2, setName, cancelName, nameSuffix) {
+  let setNative = null;
+  let clearNative = null;
+  setName += nameSuffix;
+  cancelName += nameSuffix;
+  const tasksByHandleId = {};
+  function scheduleTask(task) {
+    const data = task.data;
+    data.args[0] = function() {
+      return task.invoke.apply(this, arguments);
+    };
+    const handleOrId = setNative.apply(window2, data.args);
+    if (isNumber(handleOrId)) {
+      data.handleId = handleOrId;
+    } else {
+      data.handle = handleOrId;
+      data.isRefreshable = isFunction(handleOrId.refresh);
+    }
+    return task;
+  }
+  function clearTask(task) {
+    const { handle, handleId } = task.data;
+    return clearNative.call(window2, handle ?? handleId);
+  }
+  setNative = patchMethod(window2, setName, (delegate) => function(self2, args) {
+    if (isFunction(args[0])) {
+      const options = {
+        isRefreshable: false,
+        isPeriodic: nameSuffix === "Interval",
+        delay: nameSuffix === "Timeout" || nameSuffix === "Interval" ? args[1] || 0 : void 0,
+        args
+      };
+      const callback = args[0];
+      args[0] = function timer() {
+        try {
+          return callback.apply(this, arguments);
+        } finally {
+          const { handle: handle2, handleId: handleId2, isPeriodic: isPeriodic2, isRefreshable: isRefreshable2 } = options;
+          if (!isPeriodic2 && !isRefreshable2) {
+            if (handleId2) {
+              delete tasksByHandleId[handleId2];
+            } else if (handle2) {
+              handle2[taskSymbol] = null;
+            }
+          }
+        }
+      };
+      const task = scheduleMacroTaskWithCurrentZone(setName, args[0], options, scheduleTask, clearTask);
+      if (!task) {
+        return task;
+      }
+      const { handleId, handle, isRefreshable, isPeriodic } = task.data;
+      if (handleId) {
+        tasksByHandleId[handleId] = task;
+      } else if (handle) {
+        handle[taskSymbol] = task;
+        if (isRefreshable && !isPeriodic) {
+          const originalRefresh = handle.refresh;
+          handle.refresh = function() {
+            const { zone, state } = task;
+            if (state === "notScheduled") {
+              task._state = "scheduled";
+              zone._updateTaskCount(task, 1);
+            } else if (state === "running") {
+              task._state = "scheduling";
+            }
+            return originalRefresh.call(this);
+          };
+        }
+      }
+      return handle ?? handleId ?? task;
+    } else {
+      return delegate.apply(window2, args);
+    }
+  });
+  clearNative = patchMethod(window2, cancelName, (delegate) => function(self2, args) {
+    const id = args[0];
+    let task;
+    if (isNumber(id)) {
+      task = tasksByHandleId[id];
+      delete tasksByHandleId[id];
+    } else {
+      task = id?.[taskSymbol];
+      if (task) {
+        id[taskSymbol] = null;
+      } else {
+        task = id;
+      }
+    }
+    if (task?.type) {
+      if (task.cancelFn) {
+        task.zone.cancelTask(task);
+      }
+    } else {
+      delegate.apply(window2, args);
+    }
+  });
+}
+function patchCustomElements(_global3, api) {
+  const { isBrowser: isBrowser2, isMix: isMix2 } = api.getGlobalObjects();
+  if (!isBrowser2 && !isMix2 || !_global3["customElements"] || !("customElements" in _global3)) {
+    return;
+  }
+  const callbacks = [
+    "connectedCallback",
+    "disconnectedCallback",
+    "adoptedCallback",
+    "attributeChangedCallback",
+    "formAssociatedCallback",
+    "formDisabledCallback",
+    "formResetCallback",
+    "formStateRestoreCallback"
+  ];
+  api.patchCallbacks(api, _global3.customElements, "customElements", "define", callbacks);
+}
+function eventTargetPatch(_global3, api) {
+  if (Zone[api.symbol("patchEventTarget")]) {
+    return;
+  }
+  const { eventNames, zoneSymbolEventNames: zoneSymbolEventNames2, TRUE_STR: TRUE_STR2, FALSE_STR: FALSE_STR2, ZONE_SYMBOL_PREFIX: ZONE_SYMBOL_PREFIX2 } = api.getGlobalObjects();
+  for (let i = 0; i < eventNames.length; i++) {
+    const eventName = eventNames[i];
+    const falseEventName = eventName + FALSE_STR2;
+    const trueEventName = eventName + TRUE_STR2;
+    const symbol = ZONE_SYMBOL_PREFIX2 + falseEventName;
+    const symbolCapture = ZONE_SYMBOL_PREFIX2 + trueEventName;
+    zoneSymbolEventNames2[eventName] = {};
+    zoneSymbolEventNames2[eventName][FALSE_STR2] = symbol;
+    zoneSymbolEventNames2[eventName][TRUE_STR2] = symbolCapture;
+  }
+  const EVENT_TARGET = _global3["EventTarget"];
+  if (!EVENT_TARGET || !EVENT_TARGET.prototype) {
+    return;
+  }
+  api.patchEventTarget(_global3, api, [EVENT_TARGET && EVENT_TARGET.prototype]);
+  return true;
+}
+function patchEvent(global2, api) {
+  api.patchEventPrototype(global2, api);
+}
+function filterProperties(target, onProperties, ignoreProperties) {
+  if (!ignoreProperties || ignoreProperties.length === 0) {
+    return onProperties;
+  }
+  const tip = ignoreProperties.filter((ip) => ip.target === target);
+  if (!tip || tip.length === 0) {
+    return onProperties;
+  }
+  const targetIgnoreProperties = tip[0].ignoreProperties;
+  return onProperties.filter((op) => targetIgnoreProperties.indexOf(op) === -1);
+}
+function patchFilteredProperties(target, onProperties, ignoreProperties, prototype) {
+  if (!target) {
+    return;
+  }
+  const filteredProperties = filterProperties(target, onProperties, ignoreProperties);
+  patchOnProperties(target, filteredProperties, prototype);
+}
+function getOnEventNames(target) {
+  return Object.getOwnPropertyNames(target).filter((name) => name.startsWith("on") && name.length > 2).map((name) => name.substring(2));
+}
+function propertyDescriptorPatch(api, _global3) {
+  if (isNode && !isMix) {
+    return;
+  }
+  if (Zone[api.symbol("patchEvents")]) {
+    return;
+  }
+  const ignoreProperties = _global3["__Zone_ignore_on_properties"];
+  let patchTargets = [];
+  if (isBrowser) {
+    const internalWindow2 = window;
+    patchTargets = patchTargets.concat([
+      "Document",
+      "SVGElement",
+      "Element",
+      "HTMLElement",
+      "HTMLBodyElement",
+      "HTMLMediaElement",
+      "HTMLFrameSetElement",
+      "HTMLFrameElement",
+      "HTMLIFrameElement",
+      "HTMLMarqueeElement",
+      "Worker"
+    ]);
+    const ignoreErrorProperties = isIE() ? [{ target: internalWindow2, ignoreProperties: ["error"] }] : [];
+    patchFilteredProperties(internalWindow2, getOnEventNames(internalWindow2), ignoreProperties ? ignoreProperties.concat(ignoreErrorProperties) : ignoreProperties, ObjectGetPrototypeOf(internalWindow2));
+  }
+  patchTargets = patchTargets.concat([
+    "XMLHttpRequest",
+    "XMLHttpRequestEventTarget",
+    "IDBIndex",
+    "IDBRequest",
+    "IDBOpenDBRequest",
+    "IDBDatabase",
+    "IDBTransaction",
+    "IDBCursor",
+    "WebSocket"
+  ]);
+  for (let i = 0; i < patchTargets.length; i++) {
+    const target = _global3[patchTargets[i]];
+    target && target.prototype && patchFilteredProperties(target.prototype, getOnEventNames(target.prototype), ignoreProperties);
+  }
+}
+function patchBrowser(Zone2) {
+  Zone2.__load_patch("legacy", (global2) => {
+    const legacyPatch = global2[Zone2.__symbol__("legacyPatch")];
+    if (legacyPatch) {
+      legacyPatch();
+    }
+  });
+  Zone2.__load_patch("timers", (global2) => {
+    const set = "set";
+    const clear = "clear";
+    patchTimer(global2, set, clear, "Timeout");
+    patchTimer(global2, set, clear, "Interval");
+    patchTimer(global2, set, clear, "Immediate");
+  });
+  Zone2.__load_patch("requestAnimationFrame", (global2) => {
+    patchTimer(global2, "request", "cancel", "AnimationFrame");
+    patchTimer(global2, "mozRequest", "mozCancel", "AnimationFrame");
+    patchTimer(global2, "webkitRequest", "webkitCancel", "AnimationFrame");
+  });
+  Zone2.__load_patch("blocking", (global2, Zone3) => {
+    const blockingMethods = ["alert", "prompt", "confirm"];
+    for (let i = 0; i < blockingMethods.length; i++) {
+      const name = blockingMethods[i];
+      patchMethod(global2, name, (delegate, symbol, name2) => {
+        return function(s, args) {
+          return Zone3.current.run(delegate, global2, args, name2);
+        };
+      });
+    }
+  });
+  Zone2.__load_patch("EventTarget", (global2, Zone3, api) => {
+    patchEvent(global2, api);
+    eventTargetPatch(global2, api);
+    const XMLHttpRequestEventTarget = global2["XMLHttpRequestEventTarget"];
+    if (XMLHttpRequestEventTarget && XMLHttpRequestEventTarget.prototype) {
+      api.patchEventTarget(global2, api, [XMLHttpRequestEventTarget.prototype]);
+    }
+  });
+  Zone2.__load_patch("MutationObserver", (global2, Zone3, api) => {
+    patchClass("MutationObserver");
+    patchClass("WebKitMutationObserver");
+  });
+  Zone2.__load_patch("IntersectionObserver", (global2, Zone3, api) => {
+    patchClass("IntersectionObserver");
+  });
+  Zone2.__load_patch("FileReader", (global2, Zone3, api) => {
+    patchClass("FileReader");
+  });
+  Zone2.__load_patch("on_property", (global2, Zone3, api) => {
+    propertyDescriptorPatch(api, global2);
+  });
+  Zone2.__load_patch("customElements", (global2, Zone3, api) => {
+    patchCustomElements(global2, api);
+  });
+  Zone2.__load_patch("XHR", (global2, Zone3) => {
+    patchXHR(global2);
+    const XHR_TASK = zoneSymbol("xhrTask");
+    const XHR_SYNC = zoneSymbol("xhrSync");
+    const XHR_LISTENER = zoneSymbol("xhrListener");
+    const XHR_SCHEDULED = zoneSymbol("xhrScheduled");
+    const XHR_URL = zoneSymbol("xhrURL");
+    const XHR_ERROR_BEFORE_SCHEDULED = zoneSymbol("xhrErrorBeforeScheduled");
+    function patchXHR(window2) {
+      const XMLHttpRequest2 = window2["XMLHttpRequest"];
+      if (!XMLHttpRequest2) {
+        return;
+      }
+      const XMLHttpRequestPrototype = XMLHttpRequest2.prototype;
+      function findPendingTask(target) {
+        return target[XHR_TASK];
+      }
+      let oriAddListener = XMLHttpRequestPrototype[ZONE_SYMBOL_ADD_EVENT_LISTENER];
+      let oriRemoveListener = XMLHttpRequestPrototype[ZONE_SYMBOL_REMOVE_EVENT_LISTENER];
+      if (!oriAddListener) {
+        const XMLHttpRequestEventTarget = window2["XMLHttpRequestEventTarget"];
+        if (XMLHttpRequestEventTarget) {
+          const XMLHttpRequestEventTargetPrototype = XMLHttpRequestEventTarget.prototype;
+          oriAddListener = XMLHttpRequestEventTargetPrototype[ZONE_SYMBOL_ADD_EVENT_LISTENER];
+          oriRemoveListener = XMLHttpRequestEventTargetPrototype[ZONE_SYMBOL_REMOVE_EVENT_LISTENER];
+        }
+      }
+      const READY_STATE_CHANGE = "readystatechange";
+      const SCHEDULED = "scheduled";
+      function scheduleTask(task) {
+        const data = task.data;
+        const target = data.target;
+        target[XHR_SCHEDULED] = false;
+        target[XHR_ERROR_BEFORE_SCHEDULED] = false;
+        const listener = target[XHR_LISTENER];
+        if (!oriAddListener) {
+          oriAddListener = target[ZONE_SYMBOL_ADD_EVENT_LISTENER];
+          oriRemoveListener = target[ZONE_SYMBOL_REMOVE_EVENT_LISTENER];
+        }
+        if (listener) {
+          oriRemoveListener.call(target, READY_STATE_CHANGE, listener);
+        }
+        const newListener = target[XHR_LISTENER] = () => {
+          if (target.readyState === target.DONE) {
+            if (!data.aborted && target[XHR_SCHEDULED] && task.state === SCHEDULED) {
+              const loadTasks = target[Zone3.__symbol__("loadfalse")];
+              if (target.status !== 0 && loadTasks && loadTasks.length > 0) {
+                const oriInvoke = task.invoke;
+                task.invoke = function() {
+                  const loadTasks2 = target[Zone3.__symbol__("loadfalse")];
+                  for (let i = 0; i < loadTasks2.length; i++) {
+                    if (loadTasks2[i] === task) {
+                      loadTasks2.splice(i, 1);
+                    }
+                  }
+                  if (!data.aborted && task.state === SCHEDULED) {
+                    oriInvoke.call(task);
+                  }
+                };
+                loadTasks.push(task);
+              } else {
+                task.invoke();
+              }
+            } else if (!data.aborted && target[XHR_SCHEDULED] === false) {
+              target[XHR_ERROR_BEFORE_SCHEDULED] = true;
+            }
+          }
+        };
+        oriAddListener.call(target, READY_STATE_CHANGE, newListener);
+        const storedTask = target[XHR_TASK];
+        if (!storedTask) {
+          target[XHR_TASK] = task;
+        }
+        sendNative.apply(target, data.args);
+        target[XHR_SCHEDULED] = true;
+        return task;
+      }
+      function placeholderCallback() {
+      }
+      function clearTask(task) {
+        const data = task.data;
+        data.aborted = true;
+        return abortNative.apply(data.target, data.args);
+      }
+      const openNative = patchMethod(XMLHttpRequestPrototype, "open", () => function(self2, args) {
+        self2[XHR_SYNC] = args[2] == false;
+        self2[XHR_URL] = args[1];
+        return openNative.apply(self2, args);
+      });
+      const XMLHTTPREQUEST_SOURCE = "XMLHttpRequest.send";
+      const fetchTaskAborting = zoneSymbol("fetchTaskAborting");
+      const fetchTaskScheduling = zoneSymbol("fetchTaskScheduling");
+      const sendNative = patchMethod(XMLHttpRequestPrototype, "send", () => function(self2, args) {
+        if (Zone3.current[fetchTaskScheduling] === true) {
+          return sendNative.apply(self2, args);
+        }
+        if (self2[XHR_SYNC]) {
+          return sendNative.apply(self2, args);
+        } else {
+          const options = {
+            target: self2,
+            url: self2[XHR_URL],
+            isPeriodic: false,
+            args,
+            aborted: false
+          };
+          const task = scheduleMacroTaskWithCurrentZone(XMLHTTPREQUEST_SOURCE, placeholderCallback, options, scheduleTask, clearTask);
+          if (self2 && self2[XHR_ERROR_BEFORE_SCHEDULED] === true && !options.aborted && task.state === SCHEDULED) {
+            task.invoke();
+          }
+        }
+      });
+      const abortNative = patchMethod(XMLHttpRequestPrototype, "abort", () => function(self2, args) {
+        const task = findPendingTask(self2);
+        if (task && typeof task.type == "string") {
+          if (task.cancelFn == null || task.data && task.data.aborted) {
+            return;
+          }
+          task.zone.cancelTask(task);
+        } else if (Zone3.current[fetchTaskAborting] === true) {
+          return abortNative.apply(self2, args);
+        }
+      });
+    }
+  });
+  Zone2.__load_patch("geolocation", (global2) => {
+    if (global2["navigator"] && global2["navigator"].geolocation) {
+      patchPrototype(global2["navigator"].geolocation, ["getCurrentPosition", "watchPosition"]);
+    }
+  });
+  Zone2.__load_patch("PromiseRejectionEvent", (global2, Zone3) => {
+    function findPromiseRejectionHandler(evtName) {
+      return function(e) {
+        const eventTasks = findEventTasks(global2, evtName);
+        eventTasks.forEach((eventTask) => {
+          const PromiseRejectionEvent = global2["PromiseRejectionEvent"];
+          if (PromiseRejectionEvent) {
+            const evt = new PromiseRejectionEvent(evtName, {
+              promise: e.promise,
+              reason: e.rejection
+            });
+            eventTask.invoke(evt);
+          }
+        });
+      };
+    }
+    if (global2["PromiseRejectionEvent"]) {
+      Zone3[zoneSymbol("unhandledPromiseRejectionHandler")] = findPromiseRejectionHandler("unhandledrejection");
+      Zone3[zoneSymbol("rejectionHandledHandler")] = findPromiseRejectionHandler("rejectionhandled");
+    }
+  });
+  Zone2.__load_patch("queueMicrotask", (global2, Zone3, api) => {
+    patchQueueMicrotask(global2, api);
+  });
+}
+function patchPromise(Zone2) {
+  Zone2.__load_patch("ZoneAwarePromise", (global2, Zone3, api) => {
+    const ObjectGetOwnPropertyDescriptor2 = Object.getOwnPropertyDescriptor;
+    const ObjectDefineProperty2 = Object.defineProperty;
+    function readableObjectToString(obj) {
+      if (obj && obj.toString === Object.prototype.toString) {
+        const className = obj.constructor && obj.constructor.name;
+        return (className ? className : "") + ": " + JSON.stringify(obj);
+      }
+      return obj ? obj.toString() : Object.prototype.toString.call(obj);
+    }
+    const __symbol__2 = api.symbol;
+    const _uncaughtPromiseErrors = [];
+    const isDisableWrappingUncaughtPromiseRejection = global2[__symbol__2("DISABLE_WRAPPING_UNCAUGHT_PROMISE_REJECTION")] !== false;
+    const symbolPromise = __symbol__2("Promise");
+    const symbolThen = __symbol__2("then");
+    const creationTrace = "__creationTrace__";
+    api.onUnhandledError = (e) => {
+      if (api.showUncaughtError()) {
+        const rejection = e && e.rejection;
+        if (rejection) {
+          console.error("Unhandled Promise rejection:", rejection instanceof Error ? rejection.message : rejection, "; Zone:", e.zone.name, "; Task:", e.task && e.task.source, "; Value:", rejection, rejection instanceof Error ? rejection.stack : void 0);
+        } else {
+          console.error(e);
+        }
+      }
+    };
+    api.microtaskDrainDone = () => {
+      while (_uncaughtPromiseErrors.length) {
+        const uncaughtPromiseError = _uncaughtPromiseErrors.shift();
+        try {
+          uncaughtPromiseError.zone.runGuarded(() => {
+            if (uncaughtPromiseError.throwOriginal) {
+              throw uncaughtPromiseError.rejection;
+            }
+            throw uncaughtPromiseError;
+          });
+        } catch (error) {
+          handleUnhandledRejection(error);
+        }
+      }
+    };
+    const UNHANDLED_PROMISE_REJECTION_HANDLER_SYMBOL = __symbol__2("unhandledPromiseRejectionHandler");
+    function handleUnhandledRejection(e) {
+      api.onUnhandledError(e);
+      try {
+        const handler = Zone3[UNHANDLED_PROMISE_REJECTION_HANDLER_SYMBOL];
+        if (typeof handler === "function") {
+          handler.call(this, e);
+        }
+      } catch (err) {
+      }
+    }
+    function isThenable(value) {
+      return value && value.then;
+    }
+    function forwardResolution(value) {
+      return value;
+    }
+    function forwardRejection(rejection) {
+      return ZoneAwarePromise.reject(rejection);
+    }
+    const symbolState = __symbol__2("state");
+    const symbolValue = __symbol__2("value");
+    const symbolFinally = __symbol__2("finally");
+    const symbolParentPromiseValue = __symbol__2("parentPromiseValue");
+    const symbolParentPromiseState = __symbol__2("parentPromiseState");
+    const source = "Promise.then";
+    const UNRESOLVED = null;
+    const RESOLVED = true;
+    const REJECTED = false;
+    const REJECTED_NO_CATCH = 0;
+    function makeResolver(promise, state) {
+      return (v) => {
+        try {
+          resolvePromise(promise, state, v);
+        } catch (err) {
+          resolvePromise(promise, false, err);
+        }
+      };
+    }
+    const once = function() {
+      let wasCalled = false;
+      return function wrapper(wrappedFunction) {
+        return function() {
+          if (wasCalled) {
+            return;
+          }
+          wasCalled = true;
+          wrappedFunction.apply(null, arguments);
+        };
+      };
+    };
+    const TYPE_ERROR = "Promise resolved with itself";
+    const CURRENT_TASK_TRACE_SYMBOL = __symbol__2("currentTaskTrace");
+    function resolvePromise(promise, state, value) {
+      const onceWrapper = once();
+      if (promise === value) {
+        throw new TypeError(TYPE_ERROR);
+      }
+      if (promise[symbolState] === UNRESOLVED) {
+        let then = null;
+        try {
+          if (typeof value === "object" || typeof value === "function") {
+            then = value && value.then;
+          }
+        } catch (err) {
+          onceWrapper(() => {
+            resolvePromise(promise, false, err);
+          })();
+          return promise;
+        }
+        if (state !== REJECTED && value instanceof ZoneAwarePromise && value.hasOwnProperty(symbolState) && value.hasOwnProperty(symbolValue) && value[symbolState] !== UNRESOLVED) {
+          clearRejectedNoCatch(value);
+          resolvePromise(promise, value[symbolState], value[symbolValue]);
+        } else if (state !== REJECTED && typeof then === "function") {
+          try {
+            then.call(value, onceWrapper(makeResolver(promise, state)), onceWrapper(makeResolver(promise, false)));
+          } catch (err) {
+            onceWrapper(() => {
+              resolvePromise(promise, false, err);
+            })();
+          }
+        } else {
+          promise[symbolState] = state;
+          const queue = promise[symbolValue];
+          promise[symbolValue] = value;
+          if (promise[symbolFinally] === symbolFinally) {
+            if (state === RESOLVED) {
+              promise[symbolState] = promise[symbolParentPromiseState];
+              promise[symbolValue] = promise[symbolParentPromiseValue];
+            }
+          }
+          if (state === REJECTED && value instanceof Error) {
+            const trace = Zone3.currentTask && Zone3.currentTask.data && Zone3.currentTask.data[creationTrace];
+            if (trace) {
+              ObjectDefineProperty2(value, CURRENT_TASK_TRACE_SYMBOL, {
+                configurable: true,
+                enumerable: false,
+                writable: true,
+                value: trace
+              });
+            }
+          }
+          for (let i = 0; i < queue.length; ) {
+            scheduleResolveOrReject(promise, queue[i++], queue[i++], queue[i++], queue[i++]);
+          }
+          if (queue.length == 0 && state == REJECTED) {
+            promise[symbolState] = REJECTED_NO_CATCH;
+            let uncaughtPromiseError = value;
+            try {
+              throw new Error("Uncaught (in promise): " + readableObjectToString(value) + (value && value.stack ? "\n" + value.stack : ""));
+            } catch (err) {
+              uncaughtPromiseError = err;
+            }
+            if (isDisableWrappingUncaughtPromiseRejection) {
+              uncaughtPromiseError.throwOriginal = true;
+            }
+            uncaughtPromiseError.rejection = value;
+            uncaughtPromiseError.promise = promise;
+            uncaughtPromiseError.zone = Zone3.current;
+            uncaughtPromiseError.task = Zone3.currentTask;
+            _uncaughtPromiseErrors.push(uncaughtPromiseError);
+            api.scheduleMicroTask();
+          }
+        }
+      }
+      return promise;
+    }
+    const REJECTION_HANDLED_HANDLER = __symbol__2("rejectionHandledHandler");
+    function clearRejectedNoCatch(promise) {
+      if (promise[symbolState] === REJECTED_NO_CATCH) {
+        try {
+          const handler = Zone3[REJECTION_HANDLED_HANDLER];
+          if (handler && typeof handler === "function") {
+            handler.call(this, { rejection: promise[symbolValue], promise });
+          }
+        } catch (err) {
+        }
+        promise[symbolState] = REJECTED;
+        for (let i = 0; i < _uncaughtPromiseErrors.length; i++) {
+          if (promise === _uncaughtPromiseErrors[i].promise) {
+            _uncaughtPromiseErrors.splice(i, 1);
+          }
+        }
+      }
+    }
+    function scheduleResolveOrReject(promise, zone, chainPromise, onFulfilled, onRejected) {
+      clearRejectedNoCatch(promise);
+      const promiseState = promise[symbolState];
+      const delegate = promiseState ? typeof onFulfilled === "function" ? onFulfilled : forwardResolution : typeof onRejected === "function" ? onRejected : forwardRejection;
+      zone.scheduleMicroTask(source, () => {
+        try {
+          const parentPromiseValue = promise[symbolValue];
+          const isFinallyPromise = !!chainPromise && symbolFinally === chainPromise[symbolFinally];
+          if (isFinallyPromise) {
+            chainPromise[symbolParentPromiseValue] = parentPromiseValue;
+            chainPromise[symbolParentPromiseState] = promiseState;
+          }
+          const value = zone.run(delegate, void 0, isFinallyPromise && delegate !== forwardRejection && delegate !== forwardResolution ? [] : [parentPromiseValue]);
+          resolvePromise(chainPromise, true, value);
+        } catch (error) {
+          resolvePromise(chainPromise, false, error);
+        }
+      }, chainPromise);
+    }
+    const ZONE_AWARE_PROMISE_TO_STRING = "function ZoneAwarePromise() { [native code] }";
+    const noop3 = function() {
+    };
+    const AggregateError = global2.AggregateError;
+    class ZoneAwarePromise {
+      static toString() {
+        return ZONE_AWARE_PROMISE_TO_STRING;
+      }
+      static resolve(value) {
+        if (value instanceof ZoneAwarePromise) {
+          return value;
+        }
+        return resolvePromise(new this(null), RESOLVED, value);
+      }
+      static reject(error) {
+        return resolvePromise(new this(null), REJECTED, error);
+      }
+      static withResolvers() {
+        const result = {};
+        result.promise = new ZoneAwarePromise((res, rej) => {
+          result.resolve = res;
+          result.reject = rej;
+        });
+        return result;
+      }
+      static any(values) {
+        if (!values || typeof values[Symbol.iterator] !== "function") {
+          return Promise.reject(new AggregateError([], "All promises were rejected"));
+        }
+        const promises = [];
+        let count = 0;
+        try {
+          for (let v of values) {
+            count++;
+            promises.push(ZoneAwarePromise.resolve(v));
+          }
+        } catch (err) {
+          return Promise.reject(new AggregateError([], "All promises were rejected"));
+        }
+        if (count === 0) {
+          return Promise.reject(new AggregateError([], "All promises were rejected"));
+        }
+        let finished = false;
+        const errors = [];
+        return new ZoneAwarePromise((resolve, reject) => {
+          for (let i = 0; i < promises.length; i++) {
+            promises[i].then((v) => {
+              if (finished) {
+                return;
+              }
+              finished = true;
+              resolve(v);
+            }, (err) => {
+              errors.push(err);
+              count--;
+              if (count === 0) {
+                finished = true;
+                reject(new AggregateError(errors, "All promises were rejected"));
+              }
+            });
+          }
+        });
+      }
+      static race(values) {
+        let resolve;
+        let reject;
+        let promise = new this((res, rej) => {
+          resolve = res;
+          reject = rej;
+        });
+        function onResolve(value) {
+          resolve(value);
+        }
+        function onReject(error) {
+          reject(error);
+        }
+        for (let value of values) {
+          if (!isThenable(value)) {
+            value = this.resolve(value);
+          }
+          value.then(onResolve, onReject);
+        }
+        return promise;
+      }
+      static all(values) {
+        return ZoneAwarePromise.allWithCallback(values);
+      }
+      static allSettled(values) {
+        const P = this && this.prototype instanceof ZoneAwarePromise ? this : ZoneAwarePromise;
+        return P.allWithCallback(values, {
+          thenCallback: (value) => ({ status: "fulfilled", value }),
+          errorCallback: (err) => ({ status: "rejected", reason: err })
+        });
+      }
+      static allWithCallback(values, callback) {
+        let resolve;
+        let reject;
+        let promise = new this((res, rej) => {
+          resolve = res;
+          reject = rej;
+        });
+        let unresolvedCount = 2;
+        let valueIndex = 0;
+        const resolvedValues = [];
+        for (let value of values) {
+          if (!isThenable(value)) {
+            value = this.resolve(value);
+          }
+          const curValueIndex = valueIndex;
+          try {
+            value.then((value2) => {
+              resolvedValues[curValueIndex] = callback ? callback.thenCallback(value2) : value2;
+              unresolvedCount--;
+              if (unresolvedCount === 0) {
+                resolve(resolvedValues);
+              }
+            }, (err) => {
+              if (!callback) {
+                reject(err);
+              } else {
+                resolvedValues[curValueIndex] = callback.errorCallback(err);
+                unresolvedCount--;
+                if (unresolvedCount === 0) {
+                  resolve(resolvedValues);
+                }
+              }
+            });
+          } catch (thenErr) {
+            reject(thenErr);
+          }
+          unresolvedCount++;
+          valueIndex++;
+        }
+        unresolvedCount -= 2;
+        if (unresolvedCount === 0) {
+          resolve(resolvedValues);
+        }
+        return promise;
+      }
+      constructor(executor) {
+        const promise = this;
+        if (!(promise instanceof ZoneAwarePromise)) {
+          throw new Error("Must be an instanceof Promise.");
+        }
+        promise[symbolState] = UNRESOLVED;
+        promise[symbolValue] = [];
+        try {
+          const onceWrapper = once();
+          executor && executor(onceWrapper(makeResolver(promise, RESOLVED)), onceWrapper(makeResolver(promise, REJECTED)));
+        } catch (error) {
+          resolvePromise(promise, false, error);
+        }
+      }
+      get [Symbol.toStringTag]() {
+        return "Promise";
+      }
+      get [Symbol.species]() {
+        return ZoneAwarePromise;
+      }
+      then(onFulfilled, onRejected) {
+        let C = this.constructor?.[Symbol.species];
+        if (!C || typeof C !== "function") {
+          C = this.constructor || ZoneAwarePromise;
+        }
+        const chainPromise = new C(noop3);
+        const zone = Zone3.current;
+        if (this[symbolState] == UNRESOLVED) {
+          this[symbolValue].push(zone, chainPromise, onFulfilled, onRejected);
+        } else {
+          scheduleResolveOrReject(this, zone, chainPromise, onFulfilled, onRejected);
+        }
+        return chainPromise;
+      }
+      catch(onRejected) {
+        return this.then(null, onRejected);
+      }
+      finally(onFinally) {
+        let C = this.constructor?.[Symbol.species];
+        if (!C || typeof C !== "function") {
+          C = ZoneAwarePromise;
+        }
+        const chainPromise = new C(noop3);
+        chainPromise[symbolFinally] = symbolFinally;
+        const zone = Zone3.current;
+        if (this[symbolState] == UNRESOLVED) {
+          this[symbolValue].push(zone, chainPromise, onFinally, onFinally);
+        } else {
+          scheduleResolveOrReject(this, zone, chainPromise, onFinally, onFinally);
+        }
+        return chainPromise;
+      }
+    }
+    ZoneAwarePromise["resolve"] = ZoneAwarePromise.resolve;
+    ZoneAwarePromise["reject"] = ZoneAwarePromise.reject;
+    ZoneAwarePromise["race"] = ZoneAwarePromise.race;
+    ZoneAwarePromise["all"] = ZoneAwarePromise.all;
+    const NativePromise = global2[symbolPromise] = global2["Promise"];
+    global2["Promise"] = ZoneAwarePromise;
+    const symbolThenPatched = __symbol__2("thenPatched");
+    function patchThen(Ctor) {
+      const proto = Ctor.prototype;
+      const prop = ObjectGetOwnPropertyDescriptor2(proto, "then");
+      if (prop && (prop.writable === false || !prop.configurable)) {
+        return;
+      }
+      const originalThen = proto.then;
+      proto[symbolThen] = originalThen;
+      Ctor.prototype.then = function(onResolve, onReject) {
+        const wrapped = new ZoneAwarePromise((resolve, reject) => {
+          originalThen.call(this, resolve, reject);
+        });
+        return wrapped.then(onResolve, onReject);
+      };
+      Ctor[symbolThenPatched] = true;
+    }
+    api.patchThen = patchThen;
+    function zoneify(fn) {
+      return function(self2, args) {
+        let resultPromise = fn.apply(self2, args);
+        if (resultPromise instanceof ZoneAwarePromise) {
+          return resultPromise;
+        }
+        let ctor = resultPromise.constructor;
+        if (!ctor[symbolThenPatched]) {
+          patchThen(ctor);
+        }
+        return resultPromise;
+      };
+    }
+    if (NativePromise) {
+      patchThen(NativePromise);
+      patchMethod(global2, "fetch", (delegate) => zoneify(delegate));
+    }
+    Promise[Zone3.__symbol__("uncaughtPromiseErrors")] = _uncaughtPromiseErrors;
+    return ZoneAwarePromise;
+  });
+}
+function patchToString(Zone2) {
+  Zone2.__load_patch("toString", (global2) => {
+    const originalFunctionToString = Function.prototype.toString;
+    const ORIGINAL_DELEGATE_SYMBOL = zoneSymbol("OriginalDelegate");
+    const PROMISE_SYMBOL = zoneSymbol("Promise");
+    const ERROR_SYMBOL = zoneSymbol("Error");
+    const newFunctionToString = function toString() {
+      if (typeof this === "function") {
+        const originalDelegate = this[ORIGINAL_DELEGATE_SYMBOL];
+        if (originalDelegate) {
+          if (typeof originalDelegate === "function") {
+            return originalFunctionToString.call(originalDelegate);
+          } else {
+            return Object.prototype.toString.call(originalDelegate);
+          }
+        }
+        if (this === Promise) {
+          const nativePromise = global2[PROMISE_SYMBOL];
+          if (nativePromise) {
+            return originalFunctionToString.call(nativePromise);
+          }
+        }
+        if (this === Error) {
+          const nativeError = global2[ERROR_SYMBOL];
+          if (nativeError) {
+            return originalFunctionToString.call(nativeError);
+          }
+        }
+      }
+      return originalFunctionToString.call(this);
+    };
+    newFunctionToString[ORIGINAL_DELEGATE_SYMBOL] = originalFunctionToString;
+    Function.prototype.toString = newFunctionToString;
+    const originalObjectToString = Object.prototype.toString;
+    const PROMISE_OBJECT_TO_STRING = "[object Promise]";
+    Object.prototype.toString = function() {
+      if (typeof Promise === "function" && this instanceof Promise) {
+        return PROMISE_OBJECT_TO_STRING;
+      }
+      return originalObjectToString.call(this);
+    };
+  });
+}
+function patchCallbacks(api, target, targetName, method, callbacks) {
+  const symbol = Zone.__symbol__(method);
+  if (target[symbol]) {
+    return;
+  }
+  const nativeDelegate = target[symbol] = target[method];
+  target[method] = function(name, opts, options) {
+    if (opts && opts.prototype) {
+      callbacks.forEach(function(callback) {
+        const source = `${targetName}.${method}::` + callback;
+        const prototype = opts.prototype;
+        try {
+          if (prototype.hasOwnProperty(callback)) {
+            const descriptor = api.ObjectGetOwnPropertyDescriptor(prototype, callback);
+            if (descriptor && descriptor.value) {
+              descriptor.value = api.wrapWithCurrentZone(descriptor.value, source);
+              api._redefineProperty(opts.prototype, callback, descriptor);
+            } else if (prototype[callback]) {
+              prototype[callback] = api.wrapWithCurrentZone(prototype[callback], source);
+            }
+          } else if (prototype[callback]) {
+            prototype[callback] = api.wrapWithCurrentZone(prototype[callback], source);
+          }
+        } catch {
+        }
+      });
+    }
+    return nativeDelegate.call(target, name, opts, options);
+  };
+  api.attachOriginToPatched(target[method], nativeDelegate);
+}
+function patchUtil(Zone2) {
+  Zone2.__load_patch("util", (global2, Zone3, api) => {
+    const eventNames = getOnEventNames(global2);
+    api.patchOnProperties = patchOnProperties;
+    api.patchMethod = patchMethod;
+    api.bindArguments = bindArguments;
+    api.patchMacroTask = patchMacroTask;
+    const SYMBOL_BLACK_LISTED_EVENTS = Zone3.__symbol__("BLACK_LISTED_EVENTS");
+    const SYMBOL_UNPATCHED_EVENTS = Zone3.__symbol__("UNPATCHED_EVENTS");
+    if (global2[SYMBOL_UNPATCHED_EVENTS]) {
+      global2[SYMBOL_BLACK_LISTED_EVENTS] = global2[SYMBOL_UNPATCHED_EVENTS];
+    }
+    if (global2[SYMBOL_BLACK_LISTED_EVENTS]) {
+      Zone3[SYMBOL_BLACK_LISTED_EVENTS] = Zone3[SYMBOL_UNPATCHED_EVENTS] = global2[SYMBOL_BLACK_LISTED_EVENTS];
+    }
+    api.patchEventPrototype = patchEventPrototype;
+    api.patchEventTarget = patchEventTarget;
+    api.isIEOrEdge = isIEOrEdge;
+    api.ObjectDefineProperty = ObjectDefineProperty;
+    api.ObjectGetOwnPropertyDescriptor = ObjectGetOwnPropertyDescriptor;
+    api.ObjectCreate = ObjectCreate;
+    api.ArraySlice = ArraySlice;
+    api.patchClass = patchClass;
+    api.wrapWithCurrentZone = wrapWithCurrentZone;
+    api.filterProperties = filterProperties;
+    api.attachOriginToPatched = attachOriginToPatched;
+    api._redefineProperty = Object.defineProperty;
+    api.patchCallbacks = patchCallbacks;
+    api.getGlobalObjects = () => ({
+      globalSources,
+      zoneSymbolEventNames,
+      eventNames,
+      isBrowser,
+      isMix,
+      isNode,
+      TRUE_STR,
+      FALSE_STR,
+      ZONE_SYMBOL_PREFIX,
+      ADD_EVENT_LISTENER_STR,
+      REMOVE_EVENT_LISTENER_STR
+    });
+  });
+}
+function patchCommon(Zone2) {
+  patchPromise(Zone2);
+  patchToString(Zone2);
+  patchUtil(Zone2);
+}
+var Zone$1 = loadZone();
+patchCommon(Zone$1);
+patchBrowser(Zone$1);
+
 // node_modules/@angular/core/fesm2022/primitives/signals.mjs
 function defaultEquals(a, b) {
   return Object.is(a, b);
@@ -345,7 +2719,7 @@ function signalValueChanged(node) {
 }
 
 // node_modules/rxjs/dist/esm/internal/util/isFunction.js
-function isFunction(value) {
+function isFunction2(value) {
   return typeof value === "function";
 }
 
@@ -402,7 +2776,7 @@ var Subscription = class _Subscription {
         }
       }
       const { initialTeardown: initialFinalizer } = this;
-      if (isFunction(initialFinalizer)) {
+      if (isFunction2(initialFinalizer)) {
         try {
           initialFinalizer();
         } catch (e) {
@@ -477,10 +2851,10 @@ Subscription.EMPTY = (() => {
 })();
 var EMPTY_SUBSCRIPTION = Subscription.EMPTY;
 function isSubscription(value) {
-  return value instanceof Subscription || value && "closed" in value && isFunction(value.remove) && isFunction(value.add) && isFunction(value.unsubscribe);
+  return value instanceof Subscription || value && "closed" in value && isFunction2(value.remove) && isFunction2(value.add) && isFunction2(value.unsubscribe);
 }
 function execFinalizer(finalizer) {
-  if (isFunction(finalizer)) {
+  if (isFunction2(finalizer)) {
     finalizer();
   } else {
     finalizer.unsubscribe();
@@ -681,7 +3055,7 @@ var SafeSubscriber = class extends Subscriber {
   constructor(observerOrNext, error, complete) {
     super();
     let partialObserver;
-    if (isFunction(observerOrNext) || !observerOrNext) {
+    if (isFunction2(observerOrNext) || !observerOrNext) {
       partialObserver = {
         next: observerOrNext !== null && observerOrNext !== void 0 ? observerOrNext : void 0,
         error: error !== null && error !== void 0 ? error : void 0,
@@ -821,7 +3195,7 @@ function getPromiseCtor(promiseCtor) {
   return (_a = promiseCtor !== null && promiseCtor !== void 0 ? promiseCtor : config.Promise) !== null && _a !== void 0 ? _a : Promise;
 }
 function isObserver(value) {
-  return value && isFunction(value.next) && isFunction(value.error) && isFunction(value.complete);
+  return value && isFunction2(value.next) && isFunction2(value.error) && isFunction2(value.complete);
 }
 function isSubscriber(value) {
   return value && value instanceof Subscriber || isObserver(value) && isSubscription(value);
@@ -829,7 +3203,7 @@ function isSubscriber(value) {
 
 // node_modules/rxjs/dist/esm/internal/util/lift.js
 function hasLift(source) {
-  return isFunction(source === null || source === void 0 ? void 0 : source.lift);
+  return isFunction2(source === null || source === void 0 ? void 0 : source.lift);
 }
 function operate(init) {
   return (source) => {
@@ -1137,7 +3511,7 @@ var EMPTY = new Observable((subscriber) => subscriber.complete());
 
 // node_modules/rxjs/dist/esm/internal/util/isScheduler.js
 function isScheduler(value) {
-  return value && isFunction(value.schedule);
+  return value && isFunction2(value.schedule);
 }
 
 // node_modules/rxjs/dist/esm/internal/util/args.js
@@ -1145,7 +3519,7 @@ function last(arr) {
   return arr[arr.length - 1];
 }
 function popResultSelector(args) {
-  return isFunction(last(args)) ? args.pop() : void 0;
+  return isFunction2(last(args)) ? args.pop() : void 0;
 }
 function popScheduler(args) {
   return isScheduler(last(args)) ? args.pop() : void 0;
@@ -1258,17 +3632,17 @@ var isArrayLike = (x) => x && typeof x.length === "number" && typeof x !== "func
 
 // node_modules/rxjs/dist/esm/internal/util/isPromise.js
 function isPromise(value) {
-  return isFunction(value === null || value === void 0 ? void 0 : value.then);
+  return isFunction2(value === null || value === void 0 ? void 0 : value.then);
 }
 
 // node_modules/rxjs/dist/esm/internal/util/isInteropObservable.js
 function isInteropObservable(input2) {
-  return isFunction(input2[observable]);
+  return isFunction2(input2[observable]);
 }
 
 // node_modules/rxjs/dist/esm/internal/util/isAsyncIterable.js
 function isAsyncIterable(obj) {
-  return Symbol.asyncIterator && isFunction(obj === null || obj === void 0 ? void 0 : obj[Symbol.asyncIterator]);
+  return Symbol.asyncIterator && isFunction2(obj === null || obj === void 0 ? void 0 : obj[Symbol.asyncIterator]);
 }
 
 // node_modules/rxjs/dist/esm/internal/util/throwUnobservableError.js
@@ -1287,7 +3661,7 @@ var iterator = getSymbolIterator();
 
 // node_modules/rxjs/dist/esm/internal/util/isIterable.js
 function isIterable(input2) {
-  return isFunction(input2 === null || input2 === void 0 ? void 0 : input2[iterator]);
+  return isFunction2(input2 === null || input2 === void 0 ? void 0 : input2[iterator]);
 }
 
 // node_modules/rxjs/dist/esm/internal/util/isReadableStreamLike.js
@@ -1308,7 +3682,7 @@ function readableStreamLikeToAsyncGenerator(readableStream) {
   });
 }
 function isReadableStreamLike(obj) {
-  return isFunction(obj === null || obj === void 0 ? void 0 : obj.getReader);
+  return isFunction2(obj === null || obj === void 0 ? void 0 : obj.getReader);
 }
 
 // node_modules/rxjs/dist/esm/internal/observable/innerFrom.js
@@ -1341,7 +3715,7 @@ function innerFrom(input2) {
 function fromInteropObservable(obj) {
   return new Observable((subscriber) => {
     const obs = obj[observable]();
-    if (isFunction(obs.subscribe)) {
+    if (isFunction2(obs.subscribe)) {
       return obs.subscribe(subscriber);
     }
     throw new TypeError("Provided object does not correctly implement Symbol.observable");
@@ -1490,7 +3864,7 @@ function scheduleIterable(input2, scheduler) {
         }
       }, 0, true);
     });
-    return () => isFunction(iterator2 === null || iterator2 === void 0 ? void 0 : iterator2.return) && iterator2.return();
+    return () => isFunction2(iterator2 === null || iterator2 === void 0 ? void 0 : iterator2.return) && iterator2.return();
   });
 }
 
@@ -1558,14 +3932,14 @@ function of(...args) {
 
 // node_modules/rxjs/dist/esm/internal/observable/throwError.js
 function throwError(errorOrErrorFactory, scheduler) {
-  const errorFactory = isFunction(errorOrErrorFactory) ? errorOrErrorFactory : () => errorOrErrorFactory;
+  const errorFactory = isFunction2(errorOrErrorFactory) ? errorOrErrorFactory : () => errorOrErrorFactory;
   const init = (subscriber) => subscriber.error(errorFactory());
   return new Observable(scheduler ? (subscriber) => scheduler.schedule(init, 0, subscriber) : init);
 }
 
 // node_modules/rxjs/dist/esm/internal/util/isObservable.js
 function isObservable(obj) {
-  return !!obj && (obj instanceof Observable || isFunction(obj.lift) && isFunction(obj.subscribe));
+  return !!obj && (obj instanceof Observable || isFunction2(obj.lift) && isFunction2(obj.subscribe));
 }
 
 // node_modules/rxjs/dist/esm/internal/util/EmptyError.js
@@ -1726,7 +4100,7 @@ function mergeInternals(source, subscriber, project, concurrent, onBeforeNext, e
 
 // node_modules/rxjs/dist/esm/internal/operators/mergeMap.js
 function mergeMap(project, resultSelector, concurrent = Infinity) {
-  if (isFunction(resultSelector)) {
+  if (isFunction2(resultSelector)) {
     return mergeMap((a, i) => map((b, ii) => resultSelector(a, b, i, ii))(innerFrom(project(a, i))), concurrent);
   } else if (typeof resultSelector === "number") {
     concurrent = resultSelector;
@@ -1841,7 +4215,7 @@ function scanInternals(accumulator, seed, hasSeed, emitOnNext, emitBeforeComplet
 
 // node_modules/rxjs/dist/esm/internal/operators/concatMap.js
 function concatMap(project, resultSelector) {
-  return isFunction(resultSelector) ? mergeMap(project, resultSelector, 1) : mergeMap(project, 1);
+  return isFunction2(resultSelector) ? mergeMap(project, resultSelector, 1) : mergeMap(project, 1);
 }
 
 // node_modules/rxjs/dist/esm/internal/operators/defaultIfEmpty.js
@@ -1980,7 +4354,7 @@ function takeUntil(notifier) {
 
 // node_modules/rxjs/dist/esm/internal/operators/tap.js
 function tap(observerOrNext, error, complete) {
-  const tapObserver = isFunction(observerOrNext) || error || complete ? { next: observerOrNext, error, complete } : observerOrNext;
+  const tapObserver = isFunction2(observerOrNext) || error || complete ? { next: observerOrNext, error, complete } : observerOrNext;
   return tapObserver ? operate((source, subscriber) => {
     var _a;
     (_a = tapObserver.subscribe) === null || _a === void 0 ? void 0 : _a.call(tapObserver);
@@ -2155,7 +4529,7 @@ function makePropDecorator(name, props, parentClass, additionalProcessing) {
     return PropDecoratorFactory;
   });
 }
-var _global = globalThis;
+var _global2 = globalThis;
 function ngDevModeResetPerfCounters() {
   const locationString = typeof location !== "undefined" ? location.toString() : "";
   const newCounters = {
@@ -2190,12 +4564,12 @@ function ngDevModeResetPerfCounters() {
   };
   const allowNgDevModeTrue = locationString.indexOf("ngDevMode=false") === -1;
   if (!allowNgDevModeTrue) {
-    _global["ngDevMode"] = false;
+    _global2["ngDevMode"] = false;
   } else {
-    if (typeof _global["ngDevMode"] !== "object") {
-      _global["ngDevMode"] = {};
+    if (typeof _global2["ngDevMode"] !== "object") {
+      _global2["ngDevMode"] = {};
     }
-    Object.assign(_global["ngDevMode"], newCounters);
+    Object.assign(_global2["ngDevMode"], newCounters);
   }
   return newCounters;
 }
@@ -4020,7 +6394,7 @@ var ViewEncapsulation;
   ViewEncapsulation2[ViewEncapsulation2["ShadowDom"] = 3] = "ShadowDom";
 })(ViewEncapsulation || (ViewEncapsulation = {}));
 function getCompilerFacade(request) {
-  const globalNg = _global["ng"];
+  const globalNg = _global2["ng"];
   if (globalNg && globalNg.\u0275compilerFacade) {
     return globalNg.\u0275compilerFacade;
   }
@@ -4069,7 +6443,7 @@ function isDelegateCtor(typeStr) {
 }
 var ReflectionCapabilities = class {
   constructor(reflect) {
-    this._reflect = reflect || _global["Reflect"];
+    this._reflect = reflect || _global2["Reflect"];
   }
   factory(t) {
     return (...args) => new t(...args);
@@ -6553,9 +8927,9 @@ var policy$1;
 function getPolicy$1() {
   if (policy$1 === void 0) {
     policy$1 = null;
-    if (_global.trustedTypes) {
+    if (_global2.trustedTypes) {
       try {
-        policy$1 = _global.trustedTypes.createPolicy("angular", {
+        policy$1 = _global2.trustedTypes.createPolicy("angular", {
           createHTML: (s) => s,
           createScript: (s) => s,
           createScriptURL: (s) => s
@@ -6576,9 +8950,9 @@ var policy;
 function getPolicy() {
   if (policy === void 0) {
     policy = null;
-    if (_global.trustedTypes) {
+    if (_global2.trustedTypes) {
       try {
-        policy = _global.trustedTypes.createPolicy("angular#unsafe-bypass", {
+        policy = _global2.trustedTypes.createPolicy("angular#unsafe-bypass", {
           createHTML: (s) => s,
           createScript: (s) => s,
           createScriptURL: (s) => s
@@ -9564,9 +11938,9 @@ function performanceMarkFeature(feature) {
 function noop2(...args) {
 }
 function getNativeRequestAnimationFrame() {
-  const isBrowser = typeof _global["requestAnimationFrame"] === "function";
-  let nativeRequestAnimationFrame = _global[isBrowser ? "requestAnimationFrame" : "setTimeout"];
-  let nativeCancelAnimationFrame = _global[isBrowser ? "cancelAnimationFrame" : "clearTimeout"];
+  const isBrowser2 = typeof _global2["requestAnimationFrame"] === "function";
+  let nativeRequestAnimationFrame = _global2[isBrowser2 ? "requestAnimationFrame" : "setTimeout"];
+  let nativeCancelAnimationFrame = _global2[isBrowser2 ? "cancelAnimationFrame" : "clearTimeout"];
   if (typeof Zone !== "undefined" && nativeRequestAnimationFrame && nativeCancelAnimationFrame) {
     const unpatchedRequestAnimationFrame = nativeRequestAnimationFrame[Zone.__symbol__("OriginalDelegate")];
     if (unpatchedRequestAnimationFrame) {
@@ -9611,23 +11985,23 @@ var NgZone = class _NgZone {
       throw new RuntimeError(908, ngDevMode && `In this configuration Angular requires Zone.js`);
     }
     Zone.assertZonePatched();
-    const self = this;
-    self._nesting = 0;
-    self._outer = self._inner = Zone.current;
+    const self2 = this;
+    self2._nesting = 0;
+    self2._outer = self2._inner = Zone.current;
     if (ngDevMode) {
-      self._inner = self._inner.fork(new AsyncStackTaggingZoneSpec("Angular"));
+      self2._inner = self2._inner.fork(new AsyncStackTaggingZoneSpec("Angular"));
     }
     if (Zone["TaskTrackingZoneSpec"]) {
-      self._inner = self._inner.fork(new Zone["TaskTrackingZoneSpec"]());
+      self2._inner = self2._inner.fork(new Zone["TaskTrackingZoneSpec"]());
     }
     if (enableLongStackTrace && Zone["longStackTraceZoneSpec"]) {
-      self._inner = self._inner.fork(Zone["longStackTraceZoneSpec"]);
+      self2._inner = self2._inner.fork(Zone["longStackTraceZoneSpec"]);
     }
-    self.shouldCoalesceEventChangeDetection = !shouldCoalesceRunChangeDetection && shouldCoalesceEventChangeDetection;
-    self.shouldCoalesceRunChangeDetection = shouldCoalesceRunChangeDetection;
-    self.lastRequestAnimationFrameId = -1;
-    self.nativeRequestAnimationFrame = getNativeRequestAnimationFrame().nativeRequestAnimationFrame;
-    forkInnerZoneWithAngularBehavior(self);
+    self2.shouldCoalesceEventChangeDetection = !shouldCoalesceRunChangeDetection && shouldCoalesceEventChangeDetection;
+    self2.shouldCoalesceRunChangeDetection = shouldCoalesceRunChangeDetection;
+    self2.lastRequestAnimationFrameId = -1;
+    self2.nativeRequestAnimationFrame = getNativeRequestAnimationFrame().nativeRequestAnimationFrame;
+    forkInnerZoneWithAngularBehavior(self2);
   }
   /**
     This method checks whether the method call happens within an Angular Zone instance.
@@ -9733,7 +12107,7 @@ function delayChangeDetectionForEvents(zone) {
   if (zone.isCheckStableRunning || zone.lastRequestAnimationFrameId !== -1) {
     return;
   }
-  zone.lastRequestAnimationFrameId = zone.nativeRequestAnimationFrame.call(_global, () => {
+  zone.lastRequestAnimationFrameId = zone.nativeRequestAnimationFrame.call(_global2, () => {
     if (!zone.fakeTopEventTask) {
       zone.fakeTopEventTask = Zone.root.scheduleEventTask("fakeTopEventTask", () => {
         zone.lastRequestAnimationFrameId = -1;
@@ -14394,7 +16768,7 @@ function \u0275\u0275syntheticHostProperty(propName, value, sanitizer) {
 }
 if (false) {
   (function() {
-    _global["ngI18nClosureMode"] = // TODO(FW-1250): validate that this actually, you know, works.
+    _global2["ngI18nClosureMode"] = // TODO(FW-1250): validate that this actually, you know, works.
     // tslint:disable-next-line:no-toplevel-property-access
     typeof goog !== "undefined" && typeof goog.getMsg === "function";
   })();
@@ -14430,7 +16804,7 @@ function getLocalePluralCase(locale) {
 }
 function getLocaleData(normalizedLocale) {
   if (!(normalizedLocale in LOCALE_DATA)) {
-    LOCALE_DATA[normalizedLocale] = _global.ng && _global.ng.common && _global.ng.common.locales && _global.ng.common.locales[normalizedLocale];
+    LOCALE_DATA[normalizedLocale] = _global2.ng && _global2.ng.common && _global2.ng.common.locales && _global2.ng.common.locales[normalizedLocale];
   }
   return LOCALE_DATA[normalizedLocale];
 }
@@ -18140,7 +20514,7 @@ function publishDefaultGlobalUtils$1() {
 }
 function publishGlobalUtil(name, fn) {
   if (typeof COMPILED === "undefined" || !COMPILED) {
-    const w = _global;
+    const w = _global2;
     ngDevMode && assertDefined(fn, "function not defined");
     w[GLOBAL_PUBLISH_EXPANDO_KEY] ??= {};
     w[GLOBAL_PUBLISH_EXPANDO_KEY][name] = fn;
@@ -20406,7 +22780,7 @@ var ChangeDetectionSchedulerImpl = class _ChangeDetectionSchedulerImpl {
   raceTimeoutAndRequestAnimationFrame() {
     return __async(this, null, function* () {
       const timeout = new Promise((resolve) => setTimeout(resolve));
-      const rAF = typeof _global["requestAnimationFrame"] === "function" ? new Promise((resolve) => requestAnimationFrame(() => resolve())) : null;
+      const rAF = typeof _global2["requestAnimationFrame"] === "function" ? new Promise((resolve) => requestAnimationFrame(() => resolve())) : null;
       yield Promise.race([timeout, rAF]);
       this.tick();
     });
@@ -20551,7 +22925,7 @@ function reflectComponentType(component) {
   };
 }
 if (typeof ngDevMode !== "undefined" && ngDevMode) {
-  _global.$localize ??= function() {
+  _global2.$localize ??= function() {
     throw new Error("It looks like your application or one of its dependencies is using i18n.\nAngular 9 introduced a global `$localize()` function that needs to be loaded.\nPlease run `ng add @angular/localize` from the Angular CLI.\n(For non-CLI projects, add `import '@angular/localize/init';` to your `polyfills.ts` file.\nFor server-side rendering applications add the import to your `main.server.ts` file.)");
   };
 }
@@ -25536,17 +27910,17 @@ function relativePath(url) {
 }
 var BrowserGetTestability = class {
   addToWindow(registry) {
-    _global["getAngularTestability"] = (elem, findInAncestors = true) => {
+    _global2["getAngularTestability"] = (elem, findInAncestors = true) => {
       const testability = registry.findTestabilityInTree(elem, findInAncestors);
       if (testability == null) {
         throw new RuntimeError(5103, (typeof ngDevMode === "undefined" || ngDevMode) && "Could not find testability for element.");
       }
       return testability;
     };
-    _global["getAllAngularTestabilities"] = () => registry.getAllTestabilities();
-    _global["getAllAngularRootElements"] = () => registry.getAllRootElements();
+    _global2["getAllAngularTestabilities"] = () => registry.getAllTestabilities();
+    _global2["getAllAngularRootElements"] = () => registry.getAllRootElements();
     const whenAllStable = (callback) => {
-      const testabilities = _global["getAllAngularTestabilities"]();
+      const testabilities = _global2["getAllAngularTestabilities"]();
       let count = testabilities.length;
       const decrement = function() {
         count--;
@@ -25558,10 +27932,10 @@ var BrowserGetTestability = class {
         testability.whenStable(decrement);
       });
     };
-    if (!_global["frameworkStabilizers"]) {
-      _global["frameworkStabilizers"] = [];
+    if (!_global2["frameworkStabilizers"]) {
+      _global2["frameworkStabilizers"] = [];
     }
-    _global["frameworkStabilizers"].push(whenAllStable);
+    _global2["frameworkStabilizers"].push(whenAllStable);
   }
   findTestabilityInTree(registry, elem, findInAncestors) {
     if (elem == null) {
@@ -29414,26 +31788,26 @@ function deactivateRouteAndItsChildren(route, context2, checks) {
     checks.canDeactivateChecks.push(new CanDeactivate(null, r));
   }
 }
-function isFunction2(v) {
+function isFunction3(v) {
   return typeof v === "function";
 }
 function isBoolean(v) {
   return typeof v === "boolean";
 }
 function isCanLoad(guard) {
-  return guard && isFunction2(guard.canLoad);
+  return guard && isFunction3(guard.canLoad);
 }
 function isCanActivate(guard) {
-  return guard && isFunction2(guard.canActivate);
+  return guard && isFunction3(guard.canActivate);
 }
 function isCanActivateChild(guard) {
-  return guard && isFunction2(guard.canActivateChild);
+  return guard && isFunction3(guard.canActivateChild);
 }
 function isCanDeactivate(guard) {
-  return guard && isFunction2(guard.canDeactivate);
+  return guard && isFunction3(guard.canDeactivate);
 }
 function isCanMatch(guard) {
-  return guard && isFunction2(guard.canMatch);
+  return guard && isFunction3(guard.canMatch);
 }
 function isEmptyError(e) {
   return e instanceof EmptyError || e?.name === "EmptyError";
@@ -37078,7 +39452,7 @@ var GlowBackgroundComponent = class _GlowBackgroundComponent {
     };
   }
   static {
-    this.\u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _GlowBackgroundComponent, selectors: [["app-glow-background"]], standalone: true, features: [\u0275\u0275StandaloneFeature], ngContentSelectors: _c0, decls: 4, vars: 8, consts: [[1, "relative"], [1, "absolute", "left-0", "top-1/2", "-translate-y-1/2", "w-[800px]", "h-[1200px]", "pointer-events-none"], [1, "relative", "z-10"]], template: function GlowBackgroundComponent_Template(rf, ctx) {
+    this.\u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _GlowBackgroundComponent, selectors: [["app-glow-background"]], standalone: true, features: [\u0275\u0275StandaloneFeature], ngContentSelectors: _c0, decls: 4, vars: 6, consts: [[1, "relative"], [1, "absolute", "left-0", "top-1/2", "-translate-y-1/2", "w-[800px]", "h-[1200px]", "pointer-events-none"], [1, "relative", "z-10"]], template: function GlowBackgroundComponent_Template(rf, ctx) {
       if (rf & 1) {
         \u0275\u0275projectionDef();
         \u0275\u0275elementStart(0, "div", 0);
@@ -37088,7 +39462,6 @@ var GlowBackgroundComponent = class _GlowBackgroundComponent {
         \u0275\u0275elementEnd()();
       }
       if (rf & 2) {
-        \u0275\u0275styleProp("clip-path", "inset(0 0 0 0)");
         \u0275\u0275advance();
         \u0275\u0275styleProp("background", "radial-gradient(circle at left, #3DCFB680 0%, transparent 60%)")("transform", "translateX(-20%) translateY(-50%)")("filter", "blur(80px)");
       }
@@ -37200,37 +39573,37 @@ var translations = {
     whoiam: { de: "Wer ich bin", en: "Who I Am" },
     title: { de: "\xDCber mich", en: "About Me" },
     p1: {
-      de: "Softwareentwickler mit Schwerpunkt auf sauberer Architektur, klarer Probleml\xF6sung und professioneller Zusammenarbeit. Ich entwickle performante, zug\xE4ngliche Anwendungen und arbeite qualit\xE4ts\u2011 sowie testorientiert mit effizienten Workflows (Versionierung, Code\u2011Reviews).",
-      en: "Software developer focused on clean architecture, structured problem solving, and professional collaboration. I build performant, accessible applications and work in a quality\u2011 and test\u2011driven way using efficient workflows (version control, code reviews)."
+      de: "Hey, ich bin Jannik \u2013 leidenschaftlicher Softwareentwickler mit starkem Interesse an modernen Frontend- und Backend-Technologien. Mich motiviert, reale, funktionale Projekte von Grund auf zu bauen und sie kontinuierlich zu verbessern \u2013 Ideen in laufende Anwendungen zu verwandeln treibt mich an.",
+      en: "Hey, I'm Jannik \u2014 a passionate software developer with a strong interest in modern frontend and backend technologies. Building real, functional projects from scratch and improving them continuously motivates me to turn ideas into working applications."
     },
     location: {
-      de: "Ans\xE4ssig in Saarlouis; offen f\xFCr Remote sowie Hybrid in der Region.",
-      en: "Based in Saarlouis; open to remote and hybrid roles."
+      de: "Ans\xE4ssig in Deutschland; offen f\xFCr Remote-Arbeit und bei der passenden Gelegenheit auch f\xFCr einen Umzug. Ich arbeite gern eigenst\xE4ndig und ebenso gern in strukturierten Umgebungen mit klarer Kommunikation und Zusammenarbeit.",
+      en: "Based in Germany; open to remote work and relocation for the right opportunity. I enjoy working independently as well as in structured environments where clear communication and collaboration matter."
     },
     cognition: {
-      de: "Analytisch und l\xF6sungsorientiert: klare Architektur, Performance, Accessibility und eine starke Developer Experience stehen f\xFCr mich im Fokus.",
-      en: "Analytical and solution\u2011oriented: I prioritize clean architecture, performance, accessibility, and strong developer experience."
+      de: "Offen und lernbereit: Ich probiere neue Tools und Frameworks aus, verbessere kontinuierlich meinen Workflow und die Codequalit\xE4t und sehe Lernen als festen Bestandteil meiner Entwicklung.",
+      en: "Open-minded and eager to learn: I explore new tools and frameworks, keep refining my workflow and code quality, and treat continuous learning as core to my growth."
     },
     releases: {
-      de: "Mein Portfolio zeigt reale Projekte aus der Weiterbildung und eigene Arbeiten. Eine Auswahl findest du unten.",
-      en: "My portfolio showcases real training projects and personal work. A selection is below."
+      de: "Probleme l\xF6se ich strukturiert und analytisch: Ich zerlege komplexe Aufgaben, experimentiere mit L\xF6sungen und verbessere sie schrittweise. Beharrlichkeit, Kreativit\xE4t und Zusammenarbeit pr\xE4gen meinen Ansatz.",
+      en: "I tackle problems in a structured, analytical way: breaking challenges down, experimenting with solutions, and refining them step by step. Persistence, creativity, and collaboration shape how I work."
     },
     new_releases: {
-      de: "Aktuell erweitere ich mein Portfolio mit weiteren praxisnahen Projekten \u2013 eine Auswahl findest du unten.",
-      en: "I am currently adding more practice\u2011driven projects to my portfolio \u2014 see a selection below."
+      de: "Ich baue aktiv an eigenen Projekten, erkunde neue Werkzeuge und erweitere mein Portfolio laufend \u2013 immer mit dem Ziel, sauberer, wartbarer und effizienter zu entwickeln.",
+      en: "I actively work on personal projects, explore new tools, and keep expanding my portfolio \u2014 always aiming to build cleaner, more maintainable, and more efficient software."
     }
   },
   skills: {
     label: { de: "Technologien", en: "Technologies" },
     title: { de: "Skill Set", en: "Skill Set" },
     intro: {
-      de: "Fundierte Basis in modernen Frontend\u2011Stacks. Saubere Komponenten, State\u2011Management, Accessibility, Tests und Performance geh\xF6ren zu meinem Werkzeugkasten. Praxisnahe Projekte und kontinuierliche Reviews haben meine F\xE4higkeiten in realen Szenarien gesch\xE4rft.",
-      en: "Solid grounding in modern frontend stacks. Clean components, state management, accessibility, testing, and performance are part of my toolkit. Practice\u2011driven projects and continuous reviews have honed these skills on real scenarios."
+      de: "Hands-on Erfahrung mit modernen Webtechnologien, vor allem JavaScript, HTML und CSS. Ich baue interaktive, responsive UIs und verbinde sie mit klarer, strukturierter Logik. \xDCber pers\xF6nliche Projekte vertiefe ich laufend mein Verst\xE4ndnis f\xFCr Frontend-Entwicklung und Anwendungsfluss. Ich bin offen f\xFCr neue Frameworks, Tools und Best Practices und passe mich aktiv an, wenn sich Webentwicklung weiterentwickelt \u2013 durch Experimentieren, Refactoring und Verbesserungen halte ich meinen Stack aktuell.",
+      en: "I have hands-on experience with modern web technologies, primarily focusing on JavaScript, HTML, and CSS. I enjoy building interactive, responsive user interfaces and connecting them with clean, structured logic. Through personal projects, I continuously strengthen my understanding of frontend development and application flow. I am open to learning new frameworks, tools, and best practices, and I actively adapt to new technologies as web development evolves \u2014 regularly experimenting, refactoring, and improving existing projects to keep my stack current."
     },
     prompt: { de: "Sie brauchen eine andere Technologie?", en: "Need another technology?" },
     outro: {
-      de: "Sprechen Sie mich gern an \u2013 ich erweitere mein Know\u2011how kontinuierlich und arbeite mich z\xFCgig in neue Tools ein.",
-      en: "Feel free to reach out \u2014 I continuously expand my skill set and ramp up quickly on new tools."
+      de: "Wenn Sie einen Entwickler suchen, der motiviert ist zu wachsen, sich anzupassen und neue Skills aufzubauen, melden Sie sich gern.",
+      en: "If you are looking for a developer who is motivated to grow, adapt, and learn new skills, feel free to reach out."
     },
     cta: { de: "Let's Talk", en: "Let's Talk" }
   },
@@ -37318,10 +39691,10 @@ var translations = {
     title: { de: "Lass uns zusammenarbeiten", en: "Let's work together" },
     question: { de: "Welche Herausforderung l\xF6sen wir gemeinsam?", en: "Which challenge can we solve together?" },
     blurb: {
-      de: "Beschreibe kurz dein Projekt oder die Rolle. Ich bringe mich pragmatisch ein, liefere zuverl\xE4ssig und arbeite professionell, strukturiert und kollaborativ in Frontend\u2011Teams.",
-      en: "Describe your project or the role. I contribute pragmatically, deliver reliably, and work professionally, with structure and collaboration in frontend teams."
+      de: "Beschreibe kurz dein Projekt oder die Rolle. Ich bringe mich pragmatisch ein, liefere zuverl\xE4ssig und arbeite professionell, strukturiert und kollaborativ in Entwicklerteams.",
+      en: "Describe your project or the role. I contribute pragmatically, deliver reliably, and work professionally, with structure and collaboration in  developer teams."
     },
-    needdev: { de: "Sie suchen einen Frontend\u2011Entwickler?", en: "Looking for a frontend developer?" },
+    needdev: { de: "Sie suchen einen Softwareentwickler?", en: "Looking for a software developer?" },
     needdev_cta: { de: "Lass uns reden!", en: "Let\u2019s talk!" },
     form: {
       name_label: { de: "Wie hei\xDFt du?", en: "What's your name?" },
@@ -37553,12 +39926,12 @@ function NavLinksComponent_ng_container_0_Template(rf, ctx) {
     \u0275\u0275property("ngForOf", ctx_r2.navItems());
   }
 }
-function NavLinksComponent_ng_template_1_ng_container_0_Template(rf, ctx) {
+function NavLinksComponent_ng_template_1_ng_container_1_Template(rf, ctx) {
   if (rf & 1) {
     const _r4 = \u0275\u0275getCurrentView();
     \u0275\u0275elementContainerStart(0);
-    \u0275\u0275elementStart(1, "div", 4)(2, "a", 8);
-    \u0275\u0275listener("click", function NavLinksComponent_ng_template_1_ng_container_0_Template_a_click_2_listener() {
+    \u0275\u0275elementStart(1, "div", 4)(2, "a", 9);
+    \u0275\u0275listener("click", function NavLinksComponent_ng_template_1_ng_container_1_Template_a_click_2_listener() {
       const item_r5 = \u0275\u0275restoreView(_r4).$implicit;
       const ctx_r2 = \u0275\u0275nextContext(2);
       return \u0275\u0275resetView(ctx_r2.onSelect(item_r5.fragment));
@@ -37583,10 +39956,13 @@ function NavLinksComponent_ng_template_1_ng_container_0_Template(rf, ctx) {
 }
 function NavLinksComponent_ng_template_1_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275template(0, NavLinksComponent_ng_template_1_ng_container_0_Template, 5, 13, "ng-container", 7);
+    \u0275\u0275elementStart(0, "div", 7);
+    \u0275\u0275template(1, NavLinksComponent_ng_template_1_ng_container_1_Template, 5, 13, "ng-container", 8);
+    \u0275\u0275elementEnd();
   }
   if (rf & 2) {
     const ctx_r2 = \u0275\u0275nextContext();
+    \u0275\u0275advance();
     \u0275\u0275property("ngForOf", ctx_r2.navItems());
   }
 }
@@ -37628,9 +40004,9 @@ var NavLinksComponent = class _NavLinksComponent {
     };
   }
   static {
-    this.\u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _NavLinksComponent, selectors: [["app-nav-links"]], inputs: { variant: "variant" }, outputs: { navigate: "navigate" }, standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 3, vars: 2, consts: [["inline", ""], [4, "ngIf", "ngIfElse"], [1, "space-y-3"], ["class", "relative flex flex-col items-center group", 4, "ngFor", "ngForOf"], [1, "relative", "flex", "flex-col", "items-center", "group"], [1, "flex", "justify-center", "px-3", "py-2", "rounded-md", "font-firacode", "text-text-primary", "hover:text-[#3DCFB6]", "transition-colors", 3, "click", "routerLink", "fragment"], ["aria-hidden", "true", 1, "pointer-events-none", "absolute", "top-full", "mt-0", "left-1/2", "h-2", "w-2", "-translate-x-1/2", "rounded-full", "bg-secondary", "transition-all", "duration-200", "ease-out", "group-hover:opacity-100", "group-hover:scale-100", "group-focus-within:opacity-100", "group-focus-within:scale-100"], [4, "ngFor", "ngForOf"], [1, "font-firacode", "text-text-primary", "hover:text-[#3DCFB6]", "transition-colors", 3, "click", "routerLink", "fragment"]], template: function NavLinksComponent_Template(rf, ctx) {
+    this.\u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _NavLinksComponent, selectors: [["app-nav-links"]], inputs: { variant: "variant" }, outputs: { navigate: "navigate" }, standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 3, vars: 2, consts: [["inline", ""], [4, "ngIf", "ngIfElse"], [1, "space-y-3"], ["class", "relative flex flex-col items-center group", 4, "ngFor", "ngForOf"], [1, "relative", "flex", "flex-col", "items-center", "group"], [1, "flex", "justify-center", "px-3", "py-2", "rounded-md", "font-firacode", "text-text-primary", "hover:text-[#3DCFB6]", "transition-colors", 3, "click", "routerLink", "fragment"], ["aria-hidden", "true", 1, "pointer-events-none", "absolute", "top-full", "mt-0", "left-1/2", "h-2", "w-2", "-translate-x-1/2", "rounded-full", "bg-secondary", "transition-all", "duration-200", "ease-out", "group-hover:opacity-100", "group-hover:scale-100", "group-focus-within:opacity-100", "group-focus-within:scale-100"], [1, "flex", "items-center", "gap-4", "md:gap-6"], [4, "ngFor", "ngForOf"], [1, "font-firacode", "text-text-primary", "hover:text-[#3DCFB6]", "transition-colors", 3, "click", "routerLink", "fragment"]], template: function NavLinksComponent_Template(rf, ctx) {
       if (rf & 1) {
-        \u0275\u0275template(0, NavLinksComponent_ng_container_0_Template, 3, 1, "ng-container", 1)(1, NavLinksComponent_ng_template_1_Template, 1, 1, "ng-template", null, 0, \u0275\u0275templateRefExtractor);
+        \u0275\u0275template(0, NavLinksComponent_ng_container_0_Template, 3, 1, "ng-container", 1)(1, NavLinksComponent_ng_template_1_Template, 2, 1, "ng-template", null, 0, \u0275\u0275templateRefExtractor);
       }
       if (rf & 2) {
         const inline_r6 = \u0275\u0275reference(2);
@@ -38041,7 +40417,7 @@ var HeroComponent = class _HeroComponent {
         \u0275\u0275advance();
         \u0275\u0275property("ngClass", ctx.indicatorClasses("linkedin"));
       }
-    }, dependencies: [CommonModule, NgClass, HeaderComponent, BannerComponent, IconWithHoverComponent], styles: ["\n\n.ultrastylischelinielinks[_ngcontent-%COMP%] {\n  position: absolute;\n  bottom: 0;\n  left: var(--page-container-offset);\n  height: clamp(160px, 24vw, 286px);\n  --left-circle-h: clamp(28px, 3.5vw, 48px);\n  --icon-gap: 8px;\n  --line-top: calc(var(--left-circle-h) + var(--icon-gap));\n  pointer-events: none;\n}\n.ultrastylischelinielinks[_ngcontent-%COMP%]   .leftLine[_ngcontent-%COMP%] {\n  position: absolute;\n  left: 0;\n  top: var(--line-top);\n  bottom: 0;\n  width: 1px;\n  background: #3DCFB6;\n  z-index: 0;\n}\n.ultrastylischelinielinks[_ngcontent-%COMP%]   .leftCircle[_ngcontent-%COMP%] {\n  position: absolute;\n  left: 0;\n  top: 0;\n  width: clamp(18px, 2.5vw, 30px);\n  height: var(--left-circle-h);\n  border-radius: 32px;\n  opacity: 1;\n  border: 1px solid #3DCFB6;\n  transform: translateX(-50%) rotate(0deg);\n  z-index: 1;\n}\n.movingarrow[_ngcontent-%COMP%] {\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  width: clamp(6px, 0.8vw, 9px);\n  height: clamp(10px, 1.2vw, 16px);\n  transform: translate(-50%, -50%);\n  animation: _ngcontent-%COMP%_moveUpDown 2s infinite ease-in-out;\n}\n@keyframes _ngcontent-%COMP%_moveUpDown {\n  0%, 100% {\n    transform: translate(-50%, -50%) translateY(0);\n  }\n  50% {\n    transform: translate(-50%, -50%) translateY(10px);\n  }\n}\n.ultrastylischelinierechts[_ngcontent-%COMP%] {\n  position: absolute;\n  bottom: 0;\n  right: var(--page-container-offset);\n  height: clamp(140px, 22vw, 256px);\n  --right-circle-h: clamp(28px, 3.5vw, 48px);\n  --icon-gap: 8px;\n  --line-top: calc(var(--right-circle-h) + var(--icon-gap));\n  --icon-top-adjust: -8px;\n  pointer-events: none;\n}\n.ultrastylischelinierechts[_ngcontent-%COMP%]   .rightLine[_ngcontent-%COMP%] {\n  position: absolute;\n  right: 0;\n  top: var(--line-top);\n  bottom: 0;\n  width: 1px;\n  background: #ffffff;\n  z-index: 0;\n}\n.ultrastylischelinierechts[_ngcontent-%COMP%]   .rightCircle[_ngcontent-%COMP%] {\n  position: absolute;\n  right: 0;\n  top: 0;\n  width: clamp(18px, 2.5vw, 30px);\n  height: var(--right-circle-h);\n  transform: translateX(50%) rotate(0deg);\n  z-index: 1;\n}\n@media (max-width: 768px) {\n  .ultrastylischelinielinks[_ngcontent-%COMP%] {\n    height: clamp(220px, 40vw, 420px);\n    --left-circle-h: clamp(34px, 4.6vw, 60px);\n  }\n  .ultrastylischelinielinks[_ngcontent-%COMP%]   .leftCircle[_ngcontent-%COMP%] {\n    width: clamp(22px, 3.2vw, 40px);\n  }\n  .ultrastylischelinierechts[_ngcontent-%COMP%] {\n    height: clamp(200px, 38vw, 400px);\n    --right-circle-h: clamp(34px, 4.6vw, 60px);\n    --icon-gap: 12px;\n    --icon-top-adjust: -64px;\n  }\n  .ultrastylischelinierechts[_ngcontent-%COMP%]   .rightCircle[_ngcontent-%COMP%]   img[_ngcontent-%COMP%] {\n    position: relative;\n    top: var(--icon-top-adjust);\n  }\n  .hero-contact-indicator[_ngcontent-%COMP%] {\n    opacity: 0;\n    visibility: hidden;\n  }\n  .ultrastylischelinierechts[_ngcontent-%COMP%]   .rightCircle[_ngcontent-%COMP%] {\n    width: clamp(22px, 3.2vw, 40px);\n  }\n  .movingarrow[_ngcontent-%COMP%] {\n    width: clamp(7px, 1vw, 12px);\n    height: clamp(12px, 1.6vw, 20px);\n  }\n}\n.ultrastylischelinierechts[_ngcontent-%COMP%]   .rightCircle[_ngcontent-%COMP%]   img[_ngcontent-%COMP%] {\n  position: relative;\n  top: var(--icon-top-adjust);\n}\n.ultrastylischelinierechts[_ngcontent-%COMP%]   .rightText[_ngcontent-%COMP%] {\n  font-family: Karla;\n  font-weight: 400;\n  font-style: Regular;\n  font-size: 18px;\n  line-height: 120%;\n  letter-spacing: 0%;\n  position: absolute;\n  right: 0;\n  top: -112%;\n  transform: translateX(50%) rotate(180deg);\n  writing-mode: vertical-rl;\n  text-orientation: sideways;\n  direction: ltr;\n  white-space: nowrap;\n}\n.rightText[_ngcontent-%COMP%]:hover {\n  color: #3DCFB6;\n  transition: color 0.3s ease;\n  cursor: pointer;\n}\n.pointercss[_ngcontent-%COMP%] {\n  cursor: var(--cursor-pointer, pointer);\n}\n.hero-contact-indicator[_ngcontent-%COMP%] {\n  top: calc(40% + var(--icon-top-adjust, 0px));\n  transform: translateY(-50%) translateY(200px);\n}\n@media (min-width: 768px) and (max-width: 1023.98px) {\n  .ultrastylischelinielinks[_ngcontent-%COMP%] {\n    height: clamp(200px, 34vw, 440px);\n    --left-circle-h: clamp(32px, 4.2vw, 58px);\n  }\n  .ultrastylischelinielinks[_ngcontent-%COMP%]   .leftCircle[_ngcontent-%COMP%] {\n    width: clamp(20px, 3.2vw, 40px);\n  }\n  .ultrastylischelinierechts[_ngcontent-%COMP%] {\n    height: clamp(190px, 32vw, 420px);\n    --right-circle-h: clamp(32px, 4.2vw, 58px);\n    --icon-gap: 14px;\n    --icon-top-adjust: -64px;\n  }\n  .ultrastylischelinierechts[_ngcontent-%COMP%]   .rightCircle[_ngcontent-%COMP%] {\n    width: clamp(20px, 3.2vw, 40px);\n  }\n}\n/*# sourceMappingURL=ultrastylischelinien.css.map */"] });
+    }, dependencies: [CommonModule, NgClass, HeaderComponent, BannerComponent, IconWithHoverComponent], styles: ["\n\n.ultrastylischelinielinks[_ngcontent-%COMP%] {\n  position: absolute;\n  bottom: 0;\n  left: var(--page-container-offset);\n  height: clamp(160px, 24vw, 286px);\n  --left-circle-h: clamp(28px, 3.5vw, 48px);\n  --icon-gap: 8px;\n  --line-top: calc(var(--left-circle-h) + var(--icon-gap));\n  pointer-events: none;\n}\n.ultrastylischelinielinks[_ngcontent-%COMP%]   .leftLine[_ngcontent-%COMP%] {\n  position: absolute;\n  left: 0;\n  top: var(--line-top);\n  bottom: 0;\n  width: 1px;\n  background: #3DCFB6;\n  z-index: 0;\n}\n.ultrastylischelinielinks[_ngcontent-%COMP%]   .leftCircle[_ngcontent-%COMP%] {\n  position: absolute;\n  left: 0;\n  top: 0;\n  width: clamp(18px, 2.5vw, 30px);\n  height: var(--left-circle-h);\n  border-radius: 32px;\n  opacity: 1;\n  border: 1px solid #3DCFB6;\n  transform: translateX(-50%) rotate(0deg);\n  z-index: 1;\n}\n.movingarrow[_ngcontent-%COMP%] {\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  width: clamp(6px, 0.8vw, 9px);\n  height: clamp(10px, 1.2vw, 16px);\n  transform: translate(-50%, -50%);\n  animation: _ngcontent-%COMP%_moveUpDown 2s infinite ease-in-out;\n}\n@keyframes _ngcontent-%COMP%_moveUpDown {\n  0%, 100% {\n    transform: translate(-50%, -50%) translateY(0);\n  }\n  50% {\n    transform: translate(-50%, -50%) translateY(10px);\n  }\n}\n.ultrastylischelinierechts[_ngcontent-%COMP%] {\n  position: absolute;\n  bottom: 0;\n  right: var(--page-container-offset);\n  height: clamp(140px, 22vw, 256px);\n  --right-circle-h: clamp(28px, 3.5vw, 48px);\n  --icon-gap: 8px;\n  --line-top: calc(var(--right-circle-h) + var(--icon-gap));\n  --icon-top-adjust: -8px;\n  pointer-events: none;\n}\n.ultrastylischelinierechts[_ngcontent-%COMP%]   .rightLine[_ngcontent-%COMP%] {\n  position: absolute;\n  right: 0;\n  top: var(--line-top);\n  bottom: 0;\n  width: 1px;\n  background: #ffffff;\n  z-index: 0;\n}\n.ultrastylischelinierechts[_ngcontent-%COMP%]   .rightCircle[_ngcontent-%COMP%] {\n  position: absolute;\n  right: 0;\n  top: -48px;\n  width: clamp(18px, 2.5vw, 30px);\n  height: var(--right-circle-h);\n  transform: translateX(50%) rotate(0deg);\n  z-index: 1;\n}\n@media (max-width: 768px) {\n  .ultrastylischelinielinks[_ngcontent-%COMP%] {\n    height: clamp(220px, 40vw, 420px);\n    --left-circle-h: clamp(34px, 4.6vw, 60px);\n  }\n  .ultrastylischelinielinks[_ngcontent-%COMP%]   .leftCircle[_ngcontent-%COMP%] {\n    width: clamp(22px, 3.2vw, 40px);\n  }\n  .ultrastylischelinierechts[_ngcontent-%COMP%] {\n    height: clamp(200px, 38vw, 400px);\n    --right-circle-h: clamp(34px, 4.6vw, 60px);\n    --icon-gap: 12px;\n    --icon-top-adjust: -64px;\n  }\n  .ultrastylischelinierechts[_ngcontent-%COMP%]   .rightCircle[_ngcontent-%COMP%] {\n    width: clamp(22px, 3.2vw, 40px);\n    top: -70px;\n  }\n  .ultrastylischelinierechts[_ngcontent-%COMP%]   .rightCircle[_ngcontent-%COMP%]   img[_ngcontent-%COMP%] {\n    position: relative;\n    top: var(--icon-top-adjust);\n  }\n  .hero-contact-indicator[_ngcontent-%COMP%] {\n    opacity: 0;\n    visibility: hidden;\n  }\n  .movingarrow[_ngcontent-%COMP%] {\n    width: clamp(7px, 1vw, 12px);\n    height: clamp(12px, 1.6vw, 20px);\n  }\n}\n.ultrastylischelinierechts[_ngcontent-%COMP%]   .rightCircle[_ngcontent-%COMP%]   img[_ngcontent-%COMP%] {\n  position: relative;\n  top: var(--icon-top-adjust);\n}\n.ultrastylischelinierechts[_ngcontent-%COMP%]   .rightText[_ngcontent-%COMP%] {\n  font-family: Karla;\n  font-weight: 400;\n  font-style: Regular;\n  font-size: 18px;\n  line-height: 120%;\n  letter-spacing: 0%;\n  position: absolute;\n  right: 0;\n  top: -112%;\n  transform: translateX(50%) rotate(180deg);\n  writing-mode: vertical-rl;\n  text-orientation: sideways;\n  direction: ltr;\n  white-space: nowrap;\n}\n.rightText[_ngcontent-%COMP%]:hover {\n  color: #3DCFB6;\n  transition: color 0.3s ease;\n  cursor: pointer;\n}\n.pointercss[_ngcontent-%COMP%] {\n  cursor: var(--cursor-pointer, pointer);\n}\n@media (min-width: 768px) and (max-width: 1023.98px) {\n  .ultrastylischelinielinks[_ngcontent-%COMP%] {\n    height: clamp(200px, 34vw, 440px);\n    --left-circle-h: clamp(32px, 4.2vw, 58px);\n  }\n  .ultrastylischelinielinks[_ngcontent-%COMP%]   .leftCircle[_ngcontent-%COMP%] {\n    width: clamp(20px, 3.2vw, 40px);\n  }\n  .ultrastylischelinierechts[_ngcontent-%COMP%] {\n    height: clamp(190px, 32vw, 420px);\n    --right-circle-h: clamp(32px, 4.2vw, 58px);\n    --icon-gap: 14px;\n    --icon-top-adjust: -64px;\n  }\n  .ultrastylischelinierechts[_ngcontent-%COMP%]   .rightCircle[_ngcontent-%COMP%] {\n    width: clamp(20px, 3.2vw, 40px);\n  }\n}\n/*# sourceMappingURL=ultrastylischelinien.css.map */"] });
   }
 };
 (() => {
@@ -38152,7 +40528,7 @@ var AboutComponent = class _AboutComponent {
         let _t;
         \u0275\u0275queryRefresh(_t = \u0275\u0275loadQuery()) && (ctx.imgRef = _t.first);
       }
-    }, standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 27, vars: 10, consts: [["portrait", ""], ["id", "about", 1, "debug-component", "py-8"], [1, "aboutme-wrapper", "flex", "flex-col", "lg:flex-row", "justify-center", "items-center", "gap-8", "lg:gap-0"], [1, "pictureofmeShadow", "relative", "w-full", "max-w-[var(--card-size)]", "h-[360px]", "sm:h-[420px]", "lg:h-[var(--card-size)]"], [1, "diagonalShadow"], ["alt", "Portrait von Jannik Hoff", 1, "movingpic", "relative", "z-10", "w-full", "h-full", "rounded-[30px]", "object-cover", "grayscale", 3, "src"], [1, "whoiam", "flex", "flex-col", "lg:ml-20", "ml-0", "w-full", "lg:w-auto"], [1, "mb-5", "font-karla", "text-secondary"], ["className", "aboutme-description gap-8 p-10 flex flex-col justify-start w-full lg:w-[var(--card-size)] h-auto lg:h-[var(--card-size)]"], [1, "font-firacode", "font-bold", "text-[64px]", "leading-[100%]", "tracking-[-0.03em]", "text-text-secondary"], [1, "flex", "gap-4", "group"], ["alt", "Location icon", 1, "h-[32px]", "w-[32px]", 3, "src"], [1, "opacity-70", "group-hover:opacity-100", "transition-opacity", "duration-300"], ["alt", "Focus icon", 1, "h-[32px]", "w-[32px]", 3, "src"], ["alt", "Updates icon", 1, "h-[32px]", "w-[32px]", 3, "src"]], template: function AboutComponent_Template(rf, ctx) {
+    }, standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 27, vars: 10, consts: [["portrait", ""], ["id", "about", 1, "debug-component", "py-8"], [1, "aboutme-wrapper", "flex", "flex-col", "lg:flex-row", "justify-center", "items-center", "gap-8", "lg:gap-0"], [1, "pictureofmeShadow", "relative", "w-full", "max-w-[var(--card-size)]", "h-[360px]", "sm:h-[420px]", "lg:h-[var(--card-size)]"], [1, "diagonalShadow"], ["alt", "Portrait von Jannik Hoff", 1, "movingpic", "relative", "z-10", "w-full", "h-full", "rounded-[30px]", "object-cover", "grayscale", 3, "src"], [1, "whoiam", "flex", "flex-col", "lg:ml-20", "ml-0", "w-full", "lg:w-auto"], [1, "mb-5", "font-karla", "text-secondary"], ["className", "aboutme-description gap-8 p-10 flex flex-col justify-start w-full lg:w-[var(--card-size)] h-auto lg:h-auto"], [1, "font-firacode", "font-bold", "text-[64px]", "leading-[100%]", "tracking-[-0.03em]", "text-text-secondary"], [1, "flex", "gap-4", "group"], ["alt", "Location icon", 1, "h-[32px]", "w-[32px]", 3, "src"], [1, "opacity-70", "group-hover:opacity-100", "transition-opacity", "duration-300"], ["alt", "Focus icon", 1, "h-[32px]", "w-[32px]", 3, "src"], ["alt", "Updates icon", 1, "h-[32px]", "w-[32px]", 3, "src"]], template: function AboutComponent_Template(rf, ctx) {
       if (rf & 1) {
         \u0275\u0275elementStart(0, "section", 1)(1, "app-page-container")(2, "div", 2)(3, "div", 3);
         \u0275\u0275element(4, "div", 4)(5, "img", 5, 0);
@@ -38298,7 +40674,7 @@ var SkillsComponent = class _SkillsComponent {
     };
   }
   static {
-    this.\u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _SkillsComponent, selectors: [["app-skills"]], standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 21, vars: 8, consts: [["id", "skills", 1, "relative", "text-white", "py-8", "debug-component"], [1, "flex", "justify-center", "items-center"], [1, "flex", "flex-col", "lg:flex-row", "justify-center", "items-center", "gap-8", "lg:gap-12"], [1, "flex", "flex-col"], [1, "mb-5", "font-karla", "text-secondary"], [1, "relative", "w-full", "lg:w-[var(--card-size)]", "max-w-[var(--card-size)]", "h-auto", "lg:h-[var(--card-size)]", "mx-auto", "lg:mx-0"], ["className", "skill-description gap-8 p-10 flex flex-col w-full max-w-[var(--card-size)] h-auto lg:h-full lg:min-h-[var(--card-size)] overflow-hidden"], [1, "font-firacode", "font-bold", "text-[36px]", "sm:text-[48px]", "lg:text-[64px]", "leading-[100%]", "tracking-[-0.03em]", "text-text-secondary"], [1, "leading-relaxed", "mb-6", "opacity-70", "hover:opacity-100", "transition-opacity", "duration-300"], [1, "font-semibold", "mb-2"], [1, "opacity-70", "mb-8", "hover:opacity-100", "transition-opacity", "duration-1000"], [1, "mt-auto", "px-6", "py-3", "border", "text-primary", "rounded-full", "hover:text-secondary", "hover:border-secondary", "transition-all", "duration-1000", "w-auto", "min-w-[140px]", "md:w-[150px]", "text-center", 3, "click"], [1, "w-full", "lg:w-[var(--card-size)]", "max-w-[var(--card-size)]", "h-auto", "lg:h-[var(--card-size)]", "grid", "grid-cols-2", "sm:grid-cols-3", "gap-6", "lg:gap-8", "place-items-center", "content-center"], [3, "icon", "label", "className", "tooltip", 4, "ngFor", "ngForOf"], [3, "icon", "label", "className", "tooltip"]], template: function SkillsComponent_Template(rf, ctx) {
+    this.\u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _SkillsComponent, selectors: [["app-skills"]], standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 21, vars: 8, consts: [["id", "skills", 1, "relative", "text-white", "py-8", "debug-component"], [1, "flex", "justify-center", "items-center"], [1, "flex", "flex-col", "lg:flex-row", "justify-center", "items-center", "gap-8", "lg:gap-12"], [1, "flex", "flex-col"], [1, "mb-5", "font-karla", "text-secondary"], [1, "relative", "w-full", "lg:w-[var(--card-size)]", "max-w-[var(--card-size)]", "h-auto", "lg:h-auto", "mx-auto", "lg:mx-0"], ["className", "skill-description gap-8 p-10 flex flex-col w-full max-w-[var(--card-size)] h-auto lg:h-auto"], [1, "font-firacode", "font-bold", "text-[36px]", "sm:text-[48px]", "lg:text-[64px]", "leading-[100%]", "tracking-[-0.03em]", "text-text-secondary"], [1, "leading-relaxed", "mb-6", "opacity-70", "hover:opacity-100", "transition-opacity", "duration-300"], [1, "font-semibold", "mb-2"], [1, "opacity-70", "mb-8", "hover:opacity-100", "transition-opacity", "duration-1000"], [1, "mt-auto", "px-6", "py-3", "border", "text-primary", "rounded-full", "hover:text-secondary", "hover:border-secondary", "transition-all", "duration-1000", "w-auto", "min-w-[140px]", "md:w-[150px]", "text-center", 3, "click"], [1, "w-full", "lg:w-[var(--card-size)]", "max-w-[var(--card-size)]", "h-auto", "lg:h-[var(--card-size)]", "grid", "grid-cols-2", "sm:grid-cols-3", "gap-6", "lg:gap-8", "place-items-center", "content-center"], [3, "icon", "label", "className", "tooltip", 4, "ngFor", "ngForOf"], [3, "icon", "label", "className", "tooltip"]], template: function SkillsComponent_Template(rf, ctx) {
       if (rf & 1) {
         \u0275\u0275elementStart(0, "section", 0)(1, "app-page-container")(2, "div", 1)(3, "div", 2)(4, "div", 3)(5, "p", 4);
         \u0275\u0275text(6);
@@ -38602,7 +40978,7 @@ var ProjectSlideComponent = class _ProjectSlideComponent {
     };
   }
   static {
-    this.\u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _ProjectSlideComponent, selectors: [["app-project-slide"]], inputs: { index: "index", titleKey: "titleKey", questionKey: "questionKey", descriptionKey: "descriptionKey", techStack: "techStack", imageSrc: "imageSrc", imageAlt: "imageAlt", primaryActions: "primaryActions", nextLabel: "nextLabel" }, outputs: { next: "next", close: "close" }, standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 28, vars: 11, consts: [["buttonAction", ""], [1, "relative", "w-[min(92vw,1100px)]", "rounded-[30px]", "bg-background-greencontainer", "border", "border-secondary", "shadow-2xl", "my-8", "font-karla", "green-card-gradient"], ["type", "button", "aria-label", "Close", 1, "absolute", "right-4", "top-4", "flex", "h-9", "w-9", "items-center", "justify-center", "hover:scale-110", "transition", 3, "click", "mouseenter", "mouseleave"], ["alt", "Close", 1, "w-5", "h-5", "object-contain", 3, "src"], [1, "flex", "flex-col", "md:flex-row", "gap-8", "md:gap-12", "px-6", "md:px-10", "lg:px-12", "py-8", "md:py-10"], [1, "order-first", "md:order-last", "md:w-1/2", "md:flex", "md:flex-col", "md:justify-start"], ["aria-hidden", "true", 1, "h-8", "md:h-10"], [1, "rounded-2xl", "overflow-hidden"], [1, "w-full", "h-full", "object-cover", 3, "src", "alt"], [1, "md:w-1/2", "flex", "flex-col", "justify-between", "gap-8", "text-white"], [1, "text-5xl", "md:text-6xl", "font-karla", "font-bold", "tracking-tight", "text-secondary"], [1, "mt-2", "text-3xl", "md:text-4xl", "font-extrabold", "tracking-tight", "text-text-primary", "font-karla"], [1, "space-y-4"], [1, "font-firacode", "text-secondary", "text-base", "md:text-lg"], [1, "font-karla", "text-primary", "leading-relaxed"], [1, "flex", "flex-wrap", "items-center", "gap-3"], [3, "label", "iconSrc", 4, "ngFor", "ngForOf"], [1, "px-6", "md:px-10", "lg:px-12", "pb-8"], [1, "flex", "flex-col", "md:flex-row", "items-start", "md:items-center", "gap-4", "md:gap-6", "w-full", "md:justify-between"], ["class", "flex flex-wrap gap-4 flex-1 w-full", 4, "ngIf"], ["type", "button", 1, "inline-flex", "items-center", "gap-2", "text-sm", "font-medium", "text-secondary", "hover:text-white", "transition", "font-firacode", "self-end", "md:self-auto", "md:ml-auto", 3, "click"], ["alt", "Next", 1, "w-4", "h-4", 3, "src"], [3, "label", "iconSrc"], [1, "flex", "flex-wrap", "gap-4", "flex-1", "w-full"], [4, "ngFor", "ngForOf"], ["class", "inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary font-karla border border-white/30 bg-transparent hover:text-secondary hover:border-secondary transition-colors duration-1000 text-white gap-2", "target", "_blank", "rel", "noreferrer", 3, "href", 4, "ngIf", "ngIfElse"], ["target", "_blank", "rel", "noreferrer", 1, "inline-flex", "items-center", "justify-center", "rounded-full", "px-6", "py-2.5", "text-sm", "font-semibold", "transition", "focus-visible:outline-none", "focus-visible:ring-2", "focus-visible:ring-secondary", "font-karla", "border", "border-white/30", "bg-transparent", "hover:text-secondary", "hover:border-secondary", "transition-colors", "duration-1000", "text-white", "gap-2", 3, "href"], ["alt", "Open", 1, "w-4", "h-4", 3, "src"], ["type", "button", 1, "inline-flex", "items-center", "justify-center", "rounded-full", "px-6", "py-2.5", "text-sm", "font-semibold", "transition", "focus-visible:outline-none", "focus-visible:ring-2", "focus-visible:ring-secondary", "font-karla", "border", "border-white/30", "bg-transparent", "hover:text-secondary", "hover:border-secondary", "transition-colors", "duration-1000", "text-white", "gap-2"]], template: function ProjectSlideComponent_Template(rf, ctx) {
+    this.\u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _ProjectSlideComponent, selectors: [["app-project-slide"]], inputs: { index: "index", titleKey: "titleKey", questionKey: "questionKey", descriptionKey: "descriptionKey", techStack: "techStack", imageSrc: "imageSrc", imageAlt: "imageAlt", primaryActions: "primaryActions", nextLabel: "nextLabel" }, outputs: { next: "next", close: "close" }, standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 28, vars: 11, consts: [["buttonAction", ""], [1, "relative", "w-full", "max-w-[min(92vw,1100px)]", "rounded-[30px]", "bg-background-greencontainer", "border", "border-secondary", "shadow-2xl", "my-8", "font-karla", "green-card-gradient", "overflow-x-hidden"], ["type", "button", "aria-label", "Close", 1, "absolute", "right-4", "top-4", "z-50", "flex", "h-9", "w-9", "items-center", "justify-center", "hover:scale-110", "transition", 3, "click", "mouseenter", "mouseleave"], ["alt", "Close", 1, "w-5", "h-5", "object-contain", 3, "src"], [1, "flex", "flex-col", "md:flex-row", "gap-6", "md:gap-10", "px-2", "sm:px-4", "md:px-8", "lg:px-10", "py-6", "md:py-10", "w-full", "box-border", "overflow-x-hidden", "scale-[.98]", "sm:scale-100", "transition-transform", "duration-300"], [1, "order-first", "md:order-last", "md:w-1/2", "md:flex", "md:flex-col", "md:justify-start"], ["aria-hidden", "true", 1, "h-8", "md:h-10"], [1, "rounded-2xl", "overflow-hidden"], [1, "w-full", "h-full", "object-cover", 3, "src", "alt"], [1, "md:w-1/2", "flex", "flex-col", "justify-between", "gap-8", "text-white"], [1, "text-5xl", "md:text-6xl", "font-karla", "font-bold", "tracking-tight", "text-secondary"], [1, "mt-2", "text-3xl", "md:text-4xl", "font-extrabold", "tracking-tight", "text-text-primary", "font-karla"], [1, "space-y-4"], [1, "font-firacode", "text-secondary", "text-base", "md:text-lg"], [1, "font-karla", "text-primary", "leading-relaxed"], [1, "flex", "flex-wrap", "items-center", "gap-3"], [3, "label", "iconSrc", 4, "ngFor", "ngForOf"], [1, "px-6", "md:px-10", "lg:px-12", "pb-8"], [1, "flex", "flex-col", "md:flex-row", "items-start", "md:items-center", "gap-4", "md:gap-6", "w-full", "md:justify-between"], ["class", "flex flex-wrap gap-4 flex-1 w-full", 4, "ngIf"], ["type", "button", 1, "inline-flex", "items-center", "gap-2", "text-sm", "font-medium", "text-secondary", "hover:text-white", "transition", "font-firacode", "self-end", "md:self-auto", "md:ml-auto", 3, "click"], ["alt", "Next", 1, "w-4", "h-4", 3, "src"], [3, "label", "iconSrc"], [1, "flex", "flex-wrap", "gap-4", "flex-1", "w-full"], [4, "ngFor", "ngForOf"], ["class", "inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary font-karla border border-white/30 bg-transparent hover:text-secondary hover:border-secondary transition-colors duration-1000 text-white gap-2", "target", "_blank", "rel", "noreferrer", 3, "href", 4, "ngIf", "ngIfElse"], ["target", "_blank", "rel", "noreferrer", 1, "inline-flex", "items-center", "justify-center", "rounded-full", "px-6", "py-2.5", "text-sm", "font-semibold", "transition", "focus-visible:outline-none", "focus-visible:ring-2", "focus-visible:ring-secondary", "font-karla", "border", "border-white/30", "bg-transparent", "hover:text-secondary", "hover:border-secondary", "transition-colors", "duration-1000", "text-white", "gap-2", 3, "href"], ["alt", "Open", 1, "w-4", "h-4", 3, "src"], ["type", "button", 1, "inline-flex", "items-center", "justify-center", "rounded-full", "px-6", "py-2.5", "text-sm", "font-semibold", "transition", "focus-visible:outline-none", "focus-visible:ring-2", "focus-visible:ring-secondary", "font-karla", "border", "border-white/30", "bg-transparent", "hover:text-secondary", "hover:border-secondary", "transition-colors", "duration-1000", "text-white", "gap-2"]], template: function ProjectSlideComponent_Template(rf, ctx) {
       if (rf & 1) {
         \u0275\u0275elementStart(0, "div", 1)(1, "button", 2);
         \u0275\u0275listener("click", function ProjectSlideComponent_Template_button_click_1_listener() {
@@ -38710,9 +41086,7 @@ function ProjectsComponent_ng_container_15_Template(rf, ctx) {
   if (rf & 2) {
     const activeKey_r3 = ctx.ngIf;
     const ctx_r1 = \u0275\u0275nextContext();
-    \u0275\u0275advance();
-    \u0275\u0275styleProp("padding-top", "max(1rem, env(safe-area-inset-top, 0px))")("padding-bottom", "max(1rem, env(safe-area-inset-bottom, 0px))");
-    \u0275\u0275advance(2);
+    \u0275\u0275advance(3);
     \u0275\u0275property("index", ctx_r1.projectsMap[activeKey_r3].index)("titleKey", ctx_r1.projectsMap[activeKey_r3].titleKey)("questionKey", ctx_r1.projectsMap[activeKey_r3].questionKey)("descriptionKey", ctx_r1.projectsMap[activeKey_r3].descriptionKey)("techStack", ctx_r1.projectsMap[activeKey_r3].techStack)("imageSrc", ctx_r1.projectsMap[activeKey_r3].imageSrc)("imageAlt", ctx_r1.projectsMap[activeKey_r3].imageAlt)("primaryActions", ctx_r1.projectsMap[activeKey_r3].primaryActions)("nextLabel", ctx_r1.lang.t("projects.nextLabel"));
   }
 }
@@ -38795,7 +41169,7 @@ var ProjectsComponent = class _ProjectsComponent {
           return ctx.onEscape();
         }, false, \u0275\u0275resolveDocument);
       }
-    }, standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 16, vars: 10, consts: [["id", "projects", 1, "text-white", "py-8", "relative", "overflow-hidden", "debug-component"], [1, "flex", "justify-start", "gap-8"], [1, "w-full", "max-w-[831px]", "h-auto", "lg:h-[var(--card-size)]"], [1, "font-karla", "text-sm", "text-secondary", "mb-2"], [1, "font-firacode", "text-5xl", "font-bold", "text-secondary", "mb-4"], [1, "font-karla", "opacity-70", "hover:opacity-100", "transition-opacity", "duration-300", "max-w-xl", "mb-10"], [1, "border-t", "border-secondary"], ["className", "project1", "title", "Join", "previewImg", "assets/projects/join.png", "previewAlt", "Join preview", 3, "onClick", "stackSegments"], ["className", "project2", "title", "El Pollo Loco", "previewImg", "assets/projects/pollo.png", "previewAlt", "El Pollo Loco preview", 3, "onClick", "stackSegments"], ["className", "project3", "title", "Pok\xE9dex", "previewImg", "assets/projects/bubble.png", "previewAlt", "Pok\xE9dex preview", 3, "onClick", "stackSegments"], [4, "ngIf"], ["role", "dialog", "aria-modal", "true", 1, "fixed", "inset-0", "z-[100]", "flex", "justify-center", "items-start", "sm:items-center", "bg-black/60", "backdrop-blur-sm", "p-4", "sm:p-6", "md:p-10", "overflow-y-auto", 3, "click"], [1, "max-w-[1100px]", "w-full", 3, "click"], [3, "close", "next", "index", "titleKey", "questionKey", "descriptionKey", "techStack", "imageSrc", "imageAlt", "primaryActions", "nextLabel"]], template: function ProjectsComponent_Template(rf, ctx) {
+    }, standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 16, vars: 10, consts: [["id", "projects", 1, "text-white", "py-8", "relative", "debug-component"], [1, "flex", "justify-start", "gap-8"], [1, "w-full", "max-w-[831px]", "h-auto", "lg:h-[var(--card-size)]"], [1, "font-karla", "text-sm", "text-secondary", "mb-2"], [1, "font-firacode", "text-5xl", "font-bold", "text-secondary", "mb-4"], [1, "font-karla", "opacity-70", "hover:opacity-100", "transition-opacity", "duration-300", "max-w-xl", "mb-10"], [1, "border-t", "border-secondary"], ["className", "project1", "title", "Join", "previewImg", "assets/projects/join.png", "previewAlt", "Join preview", 3, "onClick", "stackSegments"], ["className", "project2", "title", "El Pollo Loco", "previewImg", "assets/projects/pollo.png", "previewAlt", "El Pollo Loco preview", 3, "onClick", "stackSegments"], ["className", "project3", "title", "Pok\xE9dex", "previewImg", "assets/projects/bubble.png", "previewAlt", "Pok\xE9dex preview", 3, "onClick", "stackSegments"], [4, "ngIf"], ["role", "dialog", "aria-modal", "true", 1, "fixed", "inset-0", "w-screen", "h-screen", "z-[20000]", "bg-black/80", "backdrop-blur-sm", "flex", "items-center", "justify-center", "p-4", "sm:p-6", "md:p-10", 3, "click"], [1, "w-full", "max-w-[1100px]", "max-h-[calc(100vh-2rem)]", "overflow-y-auto", 3, "click"], [3, "close", "next", "index", "titleKey", "questionKey", "descriptionKey", "techStack", "imageSrc", "imageAlt", "primaryActions", "nextLabel"]], template: function ProjectsComponent_Template(rf, ctx) {
       if (rf & 1) {
         \u0275\u0275elementStart(0, "section", 0)(1, "app-page-container")(2, "div", 1)(3, "div", 2)(4, "p", 3);
         \u0275\u0275text(5);
@@ -38822,7 +41196,7 @@ var ProjectsComponent = class _ProjectsComponent {
           return ctx.openProject("bubble");
         });
         \u0275\u0275elementEnd()()();
-        \u0275\u0275template(15, ProjectsComponent_ng_container_15_Template, 4, 13, "ng-container", 10);
+        \u0275\u0275template(15, ProjectsComponent_ng_container_15_Template, 4, 9, "ng-container", 10);
         \u0275\u0275elementEnd()()();
       }
       if (rf & 2) {
@@ -38849,7 +41223,7 @@ var ProjectsComponent = class _ProjectsComponent {
 })();
 
 // src/app/components/sections/gallery.component.ts
-function GalleryComponent_div_5_img_1_Template(rf, ctx) {
+function GalleryComponent_button_5_img_1_Template(rf, ctx) {
   if (rf & 1) {
     \u0275\u0275element(0, "img", 21);
   }
@@ -38859,20 +41233,20 @@ function GalleryComponent_div_5_img_1_Template(rf, ctx) {
     \u0275\u0275property("src", ctx_r2.quotesImg, \u0275\u0275sanitizeUrl);
   }
 }
-function GalleryComponent_div_5_Template(rf, ctx) {
+function GalleryComponent_button_5_Template(rf, ctx) {
   if (rf & 1) {
     const _r1 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 14);
-    \u0275\u0275listener("click", function GalleryComponent_div_5_Template_div_click_0_listener() {
+    \u0275\u0275elementStart(0, "button", 14);
+    \u0275\u0275listener("click", function GalleryComponent_button_5_Template_button_click_0_listener() {
       const i_r2 = \u0275\u0275restoreView(_r1).index;
       const ctx_r2 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r2.goTo(i_r2));
-    })("keydown", function GalleryComponent_div_5_Template_div_keydown_0_listener($event) {
+    })("keydown", function GalleryComponent_button_5_Template_button_keydown_0_listener($event) {
       const i_r2 = \u0275\u0275restoreView(_r1).index;
       const ctx_r2 = \u0275\u0275nextContext();
       return \u0275\u0275resetView($event.key === "Enter" || $event.key === " " ? ctx_r2.goTo(i_r2) : null);
     });
-    \u0275\u0275template(1, GalleryComponent_div_5_img_1_Template, 1, 13, "img", 15);
+    \u0275\u0275template(1, GalleryComponent_button_5_img_1_Template, 1, 13, "img", 15);
     \u0275\u0275elementStart(2, "h3", 16);
     \u0275\u0275text(3);
     \u0275\u0275elementEnd();
@@ -38891,6 +41265,7 @@ function GalleryComponent_div_5_Template(rf, ctx) {
     const ctx_r2 = \u0275\u0275nextContext();
     \u0275\u0275styleProp("width", ctx_r2.cardWidth(), "px")("height", ctx_r2.cardHeight, "px")("margin-right", ctx_r2.cardGap(), "px");
     \u0275\u0275property("ngClass", i_r2 === ctx_r2.activeIndex ? "ring-1 ring-secondary/60 scale-100 bg-[#26524b99]" : "scale-95 opacity-70 bg-background-greencontainer hover:opacity-90 hover:ring-1 hover:ring-white/20");
+    \u0275\u0275attribute("aria-pressed", i_r2 === ctx_r2.activeIndex);
     \u0275\u0275advance();
     \u0275\u0275property("ngIf", i_r2 === ctx_r2.activeIndex);
     \u0275\u0275advance(2);
@@ -38911,6 +41286,10 @@ function GalleryComponent_button_12_Template(rf, ctx) {
       const i_r6 = \u0275\u0275restoreView(_r5).index;
       const ctx_r2 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r2.goTo(i_r6));
+    })("keydown", function GalleryComponent_button_12_Template_button_keydown_0_listener($event) {
+      const i_r6 = \u0275\u0275restoreView(_r5).index;
+      const ctx_r2 = \u0275\u0275nextContext();
+      return \u0275\u0275resetView($event.key === "Enter" || $event.key === " " ? ctx_r2.goTo(i_r6) : null);
     });
     \u0275\u0275elementEnd();
   }
@@ -38918,7 +41297,7 @@ function GalleryComponent_button_12_Template(rf, ctx) {
     const i_r6 = ctx.index;
     const ctx_r2 = \u0275\u0275nextContext();
     \u0275\u0275property("ngClass", i_r6 === ctx_r2.activeIndex ? "bg-secondary" : "bg-white/30");
-    \u0275\u0275attribute("aria-label", "Go to card " + (i_r6 + 1));
+    \u0275\u0275attribute("aria-label", "Go to card " + (i_r6 + 1))("aria-pressed", i_r6 === ctx_r2.activeIndex);
   }
 }
 var GalleryComponent = class _GalleryComponent {
@@ -38964,6 +41343,9 @@ var GalleryComponent = class _GalleryComponent {
   goTo(index) {
     this.activeIndex = index;
   }
+  trackByIndex(index) {
+    return index;
+  }
   static {
     this.\u0275fac = function GalleryComponent_Factory(t) {
       return new (t || _GalleryComponent)(\u0275\u0275directiveInject(LanguageService));
@@ -38976,10 +41358,10 @@ var GalleryComponent = class _GalleryComponent {
           return ctx.onResize();
         }, false, \u0275\u0275resolveWindow);
       }
-    }, standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 15, vars: 22, consts: [[1, "w-full", "h-full", "pb-8", "debug-component"], [1, "flex", "flex-col", "gap-6", "overflow-hidden"], [1, "relative"], [1, "flex", "transition-transform", "duration-500", "ease-out"], ["class", "shrink-0 rounded-2xl border border-secondary p-6 md:p-8 transition-all duration-500 ease-out relative mt-8 text-white", "role", "button", "tabindex", "0", 3, "ngClass", "width", "height", "marginRight", "click", "keydown", 4, "ngFor", "ngForOf"], ["aria-hidden", "", 1, "pointer-events-none", "absolute", "left-0", "w-[100px]", "bg-gradient-to-r", "from-black/25", "to-transparent", "transition-opacity", "duration-0.0001"], ["aria-hidden", "", 1, "pointer-events-none", "absolute", "right-0", "w-[100px]", "bg-gradient-to-l", "from-black/25", "to-transparent", "transition-opacity", "duration-0.0001"], [1, "flex", "items-center", "justify-center", "gap-6"], ["type", "button", "aria-label", "Previous card", 1, "h-10", "w-10", "rounded-full", "border-white/20", "text-white", "hover:border-secondary", "hover:text-secondary", "transition", "flex", "items-center", "justify-center", "hover:scale-110", 3, "click"], ["alt", "Previous", 1, "w-6", "h-6", "transform", "rotate-180", 3, "src"], [1, "flex", "items-center", "gap-2"], ["type", "button", "class", "h-2.5 w-2.5 rounded-full transition", 3, "ngClass", "click", 4, "ngFor", "ngForOf"], ["type", "button", "aria-label", "Next card", 1, "h-10", "w-10", "rounded-full", "border-white/20", "text-white", "hover:border-secondary", "hover:text-secondary", "transition", "flex", "items-center", "justify-center", "hover:scale-110", 3, "click"], ["alt", "Next", 1, "w-6", "h-6", 3, "src"], ["role", "button", "tabindex", "0", 1, "shrink-0", "rounded-2xl", "border", "border-secondary", "p-6", "md:p-8", "transition-all", "duration-500", "ease-out", "relative", "mt-8", "text-white", 3, "click", "keydown", "ngClass"], ["alt", "Quotes", "class", "", 3, "src", "position", "top", "left", "width", "height", "pointerEvents", 4, "ngIf"], [1, "font-firacode", "text-lg", "md:text-xl", "text-white", "mb-2"], [1, "text-primary", "font-karla", "break-words", 3, "ngClass"], [1, "absolute", "left-6", "md:left-8", "right-6", "md:right-8", "bottom-6", "md:bottom-8", "flex", "items-center"], [1, "flex-1", "h-px", "bg-white"], [1, "ml-3", "text-primary", "whitespace-nowrap", "font-karla"], ["alt", "Quotes", 1, "", 3, "src"], ["type", "button", 1, "h-2.5", "w-2.5", "rounded-full", "transition", 3, "click", "ngClass"]], template: function GalleryComponent_Template(rf, ctx) {
+    }, standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 15, vars: 24, consts: [[1, "w-full", "h-full", "pb-8", "debug-component"], [1, "flex", "flex-col", "gap-6", "overflow-hidden"], [1, "relative"], [1, "flex", "transition-transform", "duration-500", "ease-out"], ["type", "button", "class", "shrink-0 rounded-2xl border border-secondary p-6 md:p-8 transition-all duration-500 ease-out relative mt-8 text-white text-left cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary", "tabindex", "0", 3, "ngClass", "width", "height", "marginRight", "click", "keydown", 4, "ngFor", "ngForOf", "ngForTrackBy"], ["aria-hidden", "", 1, "pointer-events-none", "absolute", "left-0", "w-[100px]", "bg-gradient-to-r", "from-black/25", "to-transparent", "transition-opacity", "duration-0.0001"], ["aria-hidden", "", 1, "pointer-events-none", "absolute", "right-0", "w-[100px]", "bg-gradient-to-l", "from-black/25", "to-transparent", "transition-opacity", "duration-0.0001"], [1, "flex", "items-center", "justify-center", "gap-6"], ["type", "button", "aria-label", "Previous card", 1, "h-10", "w-10", "rounded-full", "border-white/20", "text-white", "hover:border-secondary", "hover:text-secondary", "transition", "flex", "items-center", "justify-center", "hover:scale-110", 3, "click"], ["alt", "Previous", 1, "w-6", "h-6", "transform", "rotate-180", 3, "src"], [1, "flex", "items-center", "gap-2"], ["type", "button", "class", "h-2.5 w-2.5 rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary", "tabindex", "0", 3, "ngClass", "click", "keydown", 4, "ngFor", "ngForOf", "ngForTrackBy"], ["type", "button", "aria-label", "Next card", 1, "h-10", "w-10", "rounded-full", "border-white/20", "text-white", "hover:border-secondary", "hover:text-secondary", "transition", "flex", "items-center", "justify-center", "hover:scale-110", 3, "click"], ["alt", "Next", 1, "w-6", "h-6", 3, "src"], ["type", "button", "tabindex", "0", 1, "shrink-0", "rounded-2xl", "border", "border-secondary", "p-6", "md:p-8", "transition-all", "duration-500", "ease-out", "relative", "mt-8", "text-white", "text-left", "cursor-pointer", "focus:outline-none", "focus-visible:ring-2", "focus-visible:ring-secondary", 3, "click", "keydown", "ngClass"], ["alt", "Quotes", "class", "", 3, "src", "position", "top", "left", "width", "height", "pointerEvents", 4, "ngIf"], [1, "font-firacode", "text-lg", "md:text-xl", "text-white", "mb-2"], [1, "text-primary", "font-karla", "break-words", 3, "ngClass"], [1, "absolute", "left-6", "md:left-8", "right-6", "md:right-8", "bottom-6", "md:bottom-8", "flex", "items-center"], [1, "flex-1", "h-px", "bg-white"], [1, "ml-3", "text-primary", "whitespace-nowrap", "font-karla"], ["alt", "Quotes", 1, "", 3, "src"], ["type", "button", "tabindex", "0", 1, "h-2.5", "w-2.5", "rounded-full", "transition", "focus:outline-none", "focus-visible:ring-2", "focus-visible:ring-secondary", 3, "click", "keydown", "ngClass"]], template: function GalleryComponent_Template(rf, ctx) {
       if (rf & 1) {
         \u0275\u0275elementStart(0, "section", 0)(1, "app-page-container")(2, "div", 1)(3, "div", 2)(4, "div", 3);
-        \u0275\u0275template(5, GalleryComponent_div_5_Template, 10, 12, "div", 4);
+        \u0275\u0275template(5, GalleryComponent_button_5_Template, 10, 13, "button", 4);
         \u0275\u0275elementEnd();
         \u0275\u0275element(6, "div", 5)(7, "div", 6);
         \u0275\u0275elementEnd();
@@ -38990,7 +41372,7 @@ var GalleryComponent = class _GalleryComponent {
         \u0275\u0275element(10, "img", 9);
         \u0275\u0275elementEnd();
         \u0275\u0275elementStart(11, "div", 10);
-        \u0275\u0275template(12, GalleryComponent_button_12_Template, 1, 2, "button", 11);
+        \u0275\u0275template(12, GalleryComponent_button_12_Template, 1, 3, "button", 11);
         \u0275\u0275elementEnd();
         \u0275\u0275elementStart(13, "button", 12);
         \u0275\u0275listener("click", function GalleryComponent_Template_button_click_13_listener() {
@@ -39003,7 +41385,7 @@ var GalleryComponent = class _GalleryComponent {
         \u0275\u0275advance(4);
         \u0275\u0275styleProp("transform", "translateX(calc(50% - " + (ctx.trackOffset() + ctx.cardWidth() / 2) + "px))");
         \u0275\u0275advance();
-        \u0275\u0275property("ngForOf", ctx.cards());
+        \u0275\u0275property("ngForOf", ctx.cards())("ngForTrackBy", ctx.trackByIndex);
         \u0275\u0275advance();
         \u0275\u0275styleProp("top", ctx.cardTopOffset, "px")("height", ctx.cardHeight - 10, "px");
         \u0275\u0275classProp("opacity-100", ctx.activeIndex > 0)("opacity-0", ctx.activeIndex === 0);
@@ -39013,7 +41395,7 @@ var GalleryComponent = class _GalleryComponent {
         \u0275\u0275advance(3);
         \u0275\u0275property("src", ctx.arrowForwardImg, \u0275\u0275sanitizeUrl);
         \u0275\u0275advance(2);
-        \u0275\u0275property("ngForOf", ctx.cards());
+        \u0275\u0275property("ngForOf", ctx.cards())("ngForTrackBy", ctx.trackByIndex);
         \u0275\u0275advance(2);
         \u0275\u0275property("src", ctx.arrowForwardImg, \u0275\u0275sanitizeUrl);
       }
@@ -45510,6 +47892,9 @@ var RunnerComponent = class _RunnerComponent {
       this.handleJump();
     }
   }
+  onDocumentClick() {
+    this.handleJump();
+  }
   trackById(_, obstacle) {
     return obstacle.id;
   }
@@ -45618,6 +48003,12 @@ var RunnerComponent = class _RunnerComponent {
       if (rf & 2) {
         let _t;
         \u0275\u0275queryRefresh(_t = \u0275\u0275loadQuery()) && (ctx.trackRef = _t.first);
+      }
+    }, hostBindings: function RunnerComponent_HostBindings(rf, ctx) {
+      if (rf & 1) {
+        \u0275\u0275listener("click", function RunnerComponent_click_HostBindingHandler() {
+          return ctx.onDocumentClick();
+        }, false, \u0275\u0275resolveDocument);
       }
     }, standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 10, vars: 11, consts: [["trackRef", ""], [1, "runner-section"], [1, "runner-shell"], ["role", "button", "tabindex", "0", "aria-label", "Click oder tippe Leertaste, um den Pixel springen zu lassen", 1, "runner-track", 3, "click", "keydown"], [1, "runner-player-wrapper"], ["aria-live", "polite", 1, "runner-score"], [1, "runner-player"], ["class", "runner-obstacle", 3, "left", "width", "height", "bottom", 4, "ngFor", "ngForOf", "ngForTrackBy"], [1, "runner-ground"], [1, "runner-obstacle"]], template: function RunnerComponent_Template(rf, ctx) {
       if (rf & 1) {
@@ -46006,6 +48397,13 @@ var AppComponent = class _AppComponent {
 // src/main.ts
 bootstrapApplication(AppComponent, appConfig).catch((err) => console.error(err));
 /*! Bundled license information:
+
+zone.js/fesm2015/zone.js:
+  (**
+   * @license Angular v<unknown>
+   * (c) 2010-2024 Google LLC. https://angular.io/
+   * License: MIT
+   *)
 
 @angular/core/fesm2022/primitives/signals.mjs:
   (**

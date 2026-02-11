@@ -391,8 +391,14 @@ video {
 .z-20 {
   z-index: 20;
 }
+.z-50 {
+  z-index: 50;
+}
 .z-\[100\] {
   z-index: 100;
+}
+.z-\[20000\] {
+  z-index: 20000;
 }
 .z-\[9999\] {
   z-index: 9999;
@@ -472,6 +478,9 @@ video {
 .mt-auto {
   margin-top: auto;
 }
+.box-border {
+  box-sizing: border-box;
+}
 .block {
   display: block;
 }
@@ -550,6 +559,9 @@ video {
 .h-screen {
   height: 100vh;
 }
+.max-h-\[calc\(100vh-2rem\)\] {
+  max-height: calc(100vh - 2rem);
+}
 .min-h-screen {
   min-height: 100vh;
 }
@@ -592,14 +604,14 @@ video {
 .w-\[84px\] {
   width: 84px;
 }
-.w-\[min\(92vw\,1100px\)\] {
-  width: min(92vw, 1100px);
-}
 .w-auto {
   width: auto;
 }
 .w-full {
   width: 100%;
+}
+.w-screen {
+  width: 100vw;
 }
 .min-w-\[140px\] {
   min-width: 140px;
@@ -619,6 +631,9 @@ video {
 .max-w-\[831px\] {
   max-width: 831px;
 }
+.max-w-\[min\(92vw\,1100px\)\] {
+  max-width: min(92vw, 1100px);
+}
 .max-w-\[var\(--card-size\)\] {
   max-width: var(--card-size);
 }
@@ -630,6 +645,9 @@ video {
 }
 .shrink-0 {
   flex-shrink: 0;
+}
+.grow {
+  flex-grow: 1;
 }
 .-translate-x-1\/2 {
   --tw-translate-x: -50%;
@@ -668,6 +686,11 @@ video {
 .scale-95 {
   --tw-scale-x: .95;
   --tw-scale-y: .95;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.scale-\[\.98\] {
+  --tw-scale-x: .98;
+  --tw-scale-y: .98;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 .transform {
@@ -766,6 +789,9 @@ video {
 .overflow-y-auto {
   overflow-y: auto;
 }
+.overflow-x-hidden {
+  overflow-x: hidden;
+}
 .whitespace-nowrap {
   white-space: nowrap;
 }
@@ -833,8 +859,8 @@ video {
 .bg-black\/50 {
   background-color: rgb(0 0 0 / 0.5);
 }
-.bg-black\/60 {
-  background-color: rgb(0 0 0 / 0.6);
+.bg-black\/80 {
+  background-color: rgb(0 0 0 / 0.8);
 }
 .bg-secondary {
   --tw-bg-opacity: 1;
@@ -885,6 +911,10 @@ video {
 .p-6 {
   padding: 1.5rem;
 }
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
 .px-3 {
   padding-left: 0.75rem;
   padding-right: 0.75rem;
@@ -925,6 +955,10 @@ video {
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
 }
+.py-6 {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
 .py-8 {
   padding-top: 2rem;
   padding-bottom: 2rem;
@@ -941,6 +975,9 @@ video {
 }
 .pt-40 {
   padding-top: 10rem;
+}
+.text-left {
+  text-align: left;
 }
 .text-center {
   text-align: center;
@@ -1537,6 +1574,10 @@ section[id] {
   --tw-border-opacity: 1;
   border-color: rgb(61 207 182 / var(--tw-border-opacity, 1));
 }
+.focus\:outline-none:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
 .focus-visible\:outline-none:focus-visible {
   outline: 2px solid transparent;
   outline-offset: 2px;
@@ -1581,17 +1622,23 @@ section[id] {
   .sm\:h-\[420px\] {
     height: 420px;
   }
+  .sm\:scale-100 {
+    --tw-scale-x: 1;
+    --tw-scale-y: 1;
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  }
   .sm\:grid-cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .sm\:items-center {
-    align-items: center;
   }
   .sm\:gap-6 {
     gap: 1.5rem;
   }
   .sm\:p-6 {
     padding: 1.5rem;
+  }
+  .sm\:px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   .sm\:px-8 {
     padding-left: 2rem;
@@ -1677,8 +1724,8 @@ section[id] {
   .md\:gap-0 {
     gap: 0px;
   }
-  .md\:gap-12 {
-    gap: 3rem;
+  .md\:gap-10 {
+    gap: 2.5rem;
   }
   .md\:gap-6 {
     gap: 1.5rem;
@@ -1698,6 +1745,10 @@ section[id] {
   .md\:px-10 {
     padding-left: 2.5rem;
     padding-right: 2.5rem;
+  }
+  .md\:px-8 {
+    padding-left: 2rem;
+    padding-right: 2rem;
   }
   .md\:py-10 {
     padding-top: 2.5rem;
@@ -1757,11 +1808,8 @@ section[id] {
   .lg\:h-\[var\(--card-size\)\] {
     height: var(--card-size);
   }
-  .lg\:h-full {
-    height: 100%;
-  }
-  .lg\:min-h-\[var\(--card-size\)\] {
-    min-height: var(--card-size);
+  .lg\:h-auto {
+    height: auto;
   }
   .lg\:w-\[var\(--card-size\)\] {
     width: var(--card-size);
@@ -1783,6 +1831,10 @@ section[id] {
   }
   .lg\:gap-8 {
     gap: 2rem;
+  }
+  .lg\:px-10 {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
   }
   .lg\:px-12 {
     padding-left: 3rem;
