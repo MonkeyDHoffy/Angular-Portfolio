@@ -1,0 +1,12 @@
+
+.icon-hover {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.3s, color 0.3s;
+  &:hover {
+    background: var(--secondary);
+    color: #fff;
+  }
+}

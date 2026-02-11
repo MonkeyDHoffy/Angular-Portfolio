@@ -1,0 +1,117 @@
+
+.gallery-section {
+  width: 100%;
+  height: 100%;
+  padding-bottom: 2rem;
+
+  .gallery-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow: hidden;
+  }
+
+  .gallery-track {
+    position: relative;
+    display: flex;
+    transition: transform 0.5s ease-out;
+  }
+
+  .gallery-card {
+    flex-shrink: 0;
+    border-radius: 1.5rem;
+    border: 1px solid var(--secondary);
+    padding: 1.5rem;
+    color: #fff;
+    margin-top: 2rem;
+    transition: all 0.5s;
+    position: relative;
+    &.active {
+      box-shadow: 0 0 0 2px var(--secondary);
+      background: rgba(38, 82, 75, 0.6);
+      opacity: 1;
+      scale: 1;
+    }
+    &.inactive {
+      background: var(--background-greencontainer);
+      opacity: 0.7;
+      scale: 0.95;
+      &:hover {
+        opacity: 0.9;
+        box-shadow: 0 0 0 1px #fff2;
+      }
+    }
+  }
+
+  .gallery-card-title {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: #fff;
+    @media (min-width: 768px) { font-size: 1.5rem; }
+  }
+
+  .gallery-card-text {
+    font-family: 'Karla', sans-serif;
+    color: var(--primary);
+    word-break: break-word;
+    font-size: 1rem;
+    @media (min-width: 768px) { font-size: 1.25rem; }
+    &.long {
+      font-size: 0.875rem;
+      line-height: 1.2;
+    }
+  }
+
+  .gallery-card-sender {
+    position: absolute;
+    left: 2rem;
+    right: 2rem;
+    bottom: 2rem;
+    display: flex;
+    align-items: center;
+    .gallery-card-divider {
+      flex: 1;
+      height: 1px;
+      background: #fff;
+    }
+    .gallery-card-sender-text {
+      margin-left: 0.75rem;
+      color: var(--primary);
+      white-space: nowrap;
+      font-family: 'Karla', sans-serif;
+    }
+  }
+
+  .gallery-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    .gallery-nav-btn {
+      height: 2.5rem;
+      width: 2.5rem;
+      border-radius: 50%;
+      border: 1px solid #fff3;
+      color: #fff;
+      transition: border 0.2s, color 0.2s, scale 0.2s;
+      &:hover {
+        border-color: var(--secondary);
+        color: var(--secondary);
+        scale: 1.1;
+      }
+    }
+    .gallery-nav-dot {
+      height: 0.625rem;
+      width: 0.625rem;
+      border-radius: 50%;
+      transition: background 0.2s;
+      &.active {
+        background: var(--secondary);
+      }
+      &.inactive {
+        background: #fff3;
+      }
+    }
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "component": "PageContainerComponent",
+  "description": "Zentriert Content, maximale Breite, Padding, SCSS-Klasse .page-container"
+}

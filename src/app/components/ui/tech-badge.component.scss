@@ -1,0 +1,12 @@
+
+.tech-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 100px;
+  background: var(--background-greencontainer);
+  color: var(--primary);
+  font-size: 0.95rem;
+  font-family: 'Fira Code', monospace;
+  border: 1px solid var(--secondary);
+  margin: 0 0.5rem 0.5rem 0;
+}

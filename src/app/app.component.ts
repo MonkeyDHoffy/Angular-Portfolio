@@ -7,6 +7,6 @@ import { LayoutComponent } from './components/layout/layout.component';
   standalone: true,
   imports: [RouterOutlet, LayoutComponent],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  // styleUrls entfernt, da keine CSS-Datei vorhanden
 })
 export class AppComponent {}

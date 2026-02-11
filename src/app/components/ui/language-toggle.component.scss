@@ -1,0 +1,38 @@
+
+.language-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 100px;
+  background: transparent;
+  overflow: hidden;
+  border: 1px solid var(--text-primary);
+  width: 84px;
+  height: 28px;
+  opacity: 1;
+  transition: background 0.2s, border-color 0.2s;
+
+  &:hover {
+    background: rgba(61, 207, 182, 0.1);
+    border-color: var(--secondary);
+  }
+
+  img {
+    display: block;
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+  }
+}
+
+.language-toggle__button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.language-toggle__icon {
+  height: 100%;
+  width: auto;
+}

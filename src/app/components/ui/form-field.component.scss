@@ -1,0 +1,22 @@
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  font-family: 'Karla', sans-serif;
+  font-size: 1rem;
+  color: var(--primary);
+}
+
+.form-input {
+  border-radius: 0.5rem;
+  border: 1px solid var(--secondary);
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  color: var(--primary);
+  background: #fff;
+}

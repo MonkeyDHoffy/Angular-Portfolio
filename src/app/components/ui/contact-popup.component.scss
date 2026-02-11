@@ -1,0 +1,23 @@
+
+.contact-popup {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  min-width: 320px;
+  max-width: 400px;
+  background: #222;
+  color: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 16px 0 rgba(0,0,0,0.2);
+  padding: 1rem 2rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  &.contact-popup--success {
+    border-left: 4px solid var(--secondary);
+  }
+  &.contact-popup--error {
+    border-left: 4px solid #EF4444;
+  }
+}

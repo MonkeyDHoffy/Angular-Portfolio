@@ -48387,7 +48387,7 @@ var AppComponent = class _AppComponent {
         \u0275\u0275element(1, "router-outlet");
         \u0275\u0275elementEnd();
       }
-    }, dependencies: [RouterOutlet, LayoutComponent] });
+    }, dependencies: [RouterOutlet, LayoutComponent], encapsulation: 2 });
   }
 };
 (() => {

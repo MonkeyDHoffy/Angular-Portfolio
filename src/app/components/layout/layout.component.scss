@@ -1,0 +1,28 @@
+
+.layout-section {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--background-main);
+}
+
+.layout-header {
+  width: 100%;
+  background: var(--background-header);
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.05);
+  padding: 1rem 0;
+}
+
+.layout-footer {
+  width: 100%;
+  background: var(--background-footer);
+  box-shadow: 0 -2px 8px 0 rgba(0,0,0,0.05);
+  padding: 1rem 0;
+  margin-top: auto;
+}
+
+.layout-content {
+  flex: 1 1 0;
+  padding: 2rem 0;
+}

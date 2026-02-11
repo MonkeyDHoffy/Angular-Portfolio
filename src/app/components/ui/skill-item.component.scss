@@ -1,0 +1,13 @@
+
+.skill-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 1rem;
+  background: var(--background-greencontainer);
+  border: 1px solid var(--secondary);
+  font-family: 'Karla', sans-serif;
+  font-size: 1rem;
+  color: var(--primary);
+}

@@ -1,0 +1,143 @@
+
+.project-slide {
+  position: relative;
+  width: 100%;
+  max-width: min(92vw, 1100px);
+  border-radius: 30px;
+  background: var(--background-greencontainer);
+  border: 1px solid var(--secondary);
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.2);
+  margin: 2rem 0;
+  font-family: 'Karla', sans-serif;
+  overflow-x: hidden;
+
+  .project-slide-close {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    display: flex;
+    height: 2.25rem;
+    width: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: scale 0.2s;
+    &:hover {
+      scale: 1.1;
+    }
+    img {
+      width: 1.25rem;
+      height: 1.25rem;
+      object-fit: contain;
+    }
+  }
+
+  .project-slide-content {
+    display: flex;
+    flex-direction: column;
+    @media (min-width: 768px) {
+      flex-direction: row;
+      gap: 2.5rem;
+      padding: 2rem 2.5rem;
+    }
+    gap: 2rem;
+    padding: 1.5rem 1rem;
+  }
+
+  .project-slide-image {
+    border-radius: 1.5rem;
+    overflow: hidden;
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .project-slide-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 2rem;
+    color: #fff;
+    .project-slide-index {
+      font-family: 'Karla', sans-serif;
+      font-size: 3rem;
+      font-weight: bold;
+      color: var(--secondary);
+    }
+    .project-slide-title {
+      font-family: 'Karla', sans-serif;
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--text-primary);
+    }
+    .project-slide-question {
+      font-family: 'Fira Code', monospace;
+      color: var(--secondary);
+      font-size: 1rem;
+      @media (min-width: 768px) { font-size: 1.25rem; }
+    }
+    .project-slide-description {
+      font-family: 'Karla', sans-serif;
+      color: var(--primary);
+      line-height: 1.5;
+    }
+    .project-slide-tech {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+  }
+
+  .project-slide-actions {
+    display: flex;
+    flex-direction: column;
+    @media (min-width: 768px) {
+      flex-direction: row;
+      align-items: center;
+      gap: 1.5rem;
+      justify-content: space-between;
+    }
+    gap: 1rem;
+    padding: 0 1rem 2rem 1rem;
+    .project-slide-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 0.5rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: 1px solid #fff3;
+      background: transparent;
+      color: #fff;
+      transition: color 0.2s, border-color 0.2s;
+      &:hover {
+        color: var(--secondary);
+        border-color: var(--secondary);
+      }
+      img {
+        width: 1rem;
+        height: 1rem;
+        margin-left: 0.5rem;
+      }
+    }
+    .project-slide-next {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 1rem;
+      color: var(--secondary);
+      transition: color 0.2s;
+      &:hover {
+        color: #fff;
+      }
+      img {
+        width: 1rem;
+        height: 1rem;
+      }
+    }
+  }
+}

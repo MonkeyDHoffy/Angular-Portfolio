@@ -1,7 +1,7 @@
 <section id="skills" class="relative text-white py-8 debug-component">
     <app-page-container>
         <div class="flex justify-center items-center">
-            <div class="flex flex-col lg:flex-row justify-center items-center gap-8 lg:gap-12">
+            <div class="flex flex-col md:flex-row justify-center items-center gap-8 md:gap-12">
                 <div class="flex flex-col">
                     <p class="mb-5 font-karla text-secondary">{{ lang.t('skills.label') }}</p>
                     <div
@@ -36,7 +36,7 @@
                 </div>
 
                 <div
-                    class="w-full lg:w-[var(--card-size)] max-w-[var(--card-size)] h-auto lg:h-[var(--card-size)] grid grid-cols-2 sm:grid-cols-3 gap-6 lg:gap-8 place-items-center content-center">
+                    class="w-full md:w-[var(--card-size)] max-w-[var(--card-size)] h-auto md:h-[var(--card-size)] grid grid-cols-2 sm:grid-cols-3 gap-6 md:gap-8 place-items-center content-center">
                     <app-skill-item *ngFor="let item of skillItems" [icon]="item.icon" [label]="item.label"
                         [className]="item.className || ''" [tooltip]="item.tooltip"></app-skill-item>
                 </div>

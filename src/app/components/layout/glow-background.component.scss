@@ -1,0 +1,12 @@
+
+.glow-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, var(--secondary) 0%, transparent 70%);
+  opacity: 0.2;
+}

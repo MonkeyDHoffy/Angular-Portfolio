@@ -1,0 +1,55 @@
+
+.skills-section {
+  width: 100%;
+  padding: 2rem 0;
+  color: #fff;
+
+  .skills-title {
+    font-family: 'Fira Code', monospace;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--secondary);
+    margin-bottom: 1rem;
+  }
+
+  .skills-intro {
+    font-family: 'Karla', sans-serif;
+    font-size: 1.25rem;
+    color: var(--primary);
+    margin-bottom: 2rem;
+  }
+
+  .skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .skills-item {
+    background: var(--background-greencontainer);
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 16px 0 rgba(0,0,0,0.1);
+    border: 1px solid var(--secondary);
+    flex: 1 1 200px;
+    min-width: 200px;
+    max-width: 300px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .skills-item-icon {
+    width: 2rem;
+    height: 2rem;
+    object-fit: contain;
+  }
+
+  .skills-item-label {
+    font-family: 'Karla', sans-serif;
+    font-size: 1rem;
+    color: var(--primary);
+  }
+}

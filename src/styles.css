@@ -5,11 +5,9 @@
 :root {
   --page-max-width: 80rem;
   --page-padding: clamp(1.5rem, 2vw, 3rem);
-  --page-container-offset: max(
-    var(--page-padding),
-    calc((100vw - var(--page-max-width)) / 2 + var(--page-padding))
-  );
+  --page-container-offset: calc((100vw - var(--page-max-width)) / 2 + var(--page-padding));
   --card-size: 568px;
+  cursor: url('assets/cursor.png'), auto;
   --selection-bg: rgba(45, 212, 191, 0.25);
   --selection-text: #eafff8;
   --cursor-opacity: 1;
@@ -43,6 +41,7 @@ summary,
 html, body {
   overflow-x: hidden;
   background-color: #0F0F0F;
+  cursor: url('assets/cursor.png'), auto !important;
 }
 
 /* Smooth anchor scroll */

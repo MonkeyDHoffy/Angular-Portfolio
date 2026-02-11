@@ -1,0 +1,22 @@
+
+.project-list-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: var(--background-greencontainer);
+  border: 1px solid var(--secondary);
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+  transition: border-color 0.3s;
+  &:hover {
+    border-color: var(--primary);
+  }
+}
+
+.project-list-item-title {
+  font-family: 'Fira Code', monospace;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--primary);
+}
