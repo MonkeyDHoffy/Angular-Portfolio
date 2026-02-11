@@ -1,0 +1,46 @@
+<section id="skills" class="relative text-white py-8 debug-component">
+    <app-page-container>
+        <div class="flex justify-center items-center">
+            <div class="flex flex-col lg:flex-row justify-center items-center gap-8 lg:gap-12">
+                <div class="flex flex-col">
+                    <p class="mb-5 font-karla text-secondary">{{ lang.t('skills.label') }}</p>
+                    <div
+                        class="relative w-full lg:w-[var(--card-size)] max-w-[var(--card-size)] h-auto lg:h-auto mx-auto lg:mx-0">
+                        <app-rounded-card
+                            className="skill-description gap-8 p-10 flex flex-col w-full max-w-[var(--card-size)] h-auto lg:h-auto">
+                            <h2
+                                class="font-firacode font-bold text-[36px] sm:text-[48px] lg:text-[64px] leading-[100%] tracking-[-0.03em] text-text-secondary">
+                                {{ lang.t('skills.title') }}
+                            </h2>
+
+                            <p
+                                class="leading-relaxed mb-6 opacity-70 hover:opacity-100 transition-opacity duration-300">
+                                {{ lang.t('skills.intro') }}
+                            </p>
+
+                            <p class="font-semibold mb-2">
+                                {{ lang.t('skills.prompt') }}
+                            </p>
+
+                            <p class="opacity-70 mb-8 hover:opacity-100 transition-opacity duration-1000">
+                                {{ lang.t('skills.outro') }}
+                            </p>
+
+                            <button
+                                class="mt-auto px-6 py-3 border text-primary rounded-full hover:text-secondary hover:border-secondary transition-all duration-1000 w-auto min-w-[140px] md:w-[150px] text-center"
+                                (click)="goContact()" [attr.aria-label]="lang.t('skills.cta')">
+                                {{ lang.t('skills.cta') }}
+                            </button>
+                        </app-rounded-card>
+                    </div>
+                </div>
+
+                <div
+                    class="w-full lg:w-[var(--card-size)] max-w-[var(--card-size)] h-auto lg:h-[var(--card-size)] grid grid-cols-2 sm:grid-cols-3 gap-6 lg:gap-8 place-items-center content-center">
+                    <app-skill-item *ngFor="let item of skillItems" [icon]="item.icon" [label]="item.label"
+                        [className]="item.className || ''" [tooltip]="item.tooltip"></app-skill-item>
+                </div>
+            </div>
+        </div>
+    </app-page-container>
+</section>

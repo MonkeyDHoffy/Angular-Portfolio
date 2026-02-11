@@ -1,0 +1,42 @@
+<header class="header-gradient text-text-primary h-[64px] md:h-[98px]">
+    <div class="md:hidden">
+        <app-page-container className="flex h-[64px] items-center justify-between">
+            <a routerLink="/" class="inline-flex items-center">
+                <img [src]="mobileLogo" alt="Logo" class="h-8 w-auto" />
+            </a>
+            <button type="button" aria-label="Menü öffnen" [attr.aria-expanded]="open" aria-controls="mobile-menu"
+                (click)="toggleMenu()"
+                class="inline-flex items-center justify-center w-10 h-10 rounded-md backdrop-blur hover:bg-black/30 transition">
+                <img [src]="menuIcon" alt="" class="w-5 h-5" />
+            </button>
+        </app-page-container>
+
+        <div *ngIf="open" class="fixed inset-0 z-[9999]" aria-modal="true" role="dialog">
+            <div class="absolute inset-0 bg-black/50 z-10" (click)="closeMenu()"></div>
+            <div id="mobile-menu"
+                class="absolute left-0 right-0 top-0 mx-4 mt-20 rounded-2xl border border-white/15 backdrop-blur p-5 shadow-2xl z-20 green-card-gradient"
+                (click)="$event.stopPropagation()">
+                <nav aria-label="Hauptnavigation">
+                    <app-nav-links variant="list" (navigate)="closeMenu()"></app-nav-links>
+                </nav>
+                <div class="mt-5 pt-4 flex justify-center">
+                    <app-language-toggle></app-language-toggle>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hidden md:block">
+        <app-page-container className="flex h-[98px] items-center justify-between">
+            <div class="HeaderNavigation justify-between items-center flex flex-wrap gap-4 sm:gap-6 md:gap-8">
+                <div><app-language-toggle></app-language-toggle></div>
+                <app-nav-links></app-nav-links>
+            </div>
+            <div class="Logo">
+                <a routerLink="/">
+                    <img [src]="logo" alt="Logo" class="h-12 w-auto" />
+                </a>
+            </div>
+        </app-page-container>
+    </div>
+</header>

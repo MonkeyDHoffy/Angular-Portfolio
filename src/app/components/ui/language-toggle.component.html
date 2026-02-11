@@ -1,0 +1,5 @@
+<button type="button"
+    class="inline-flex items-center justify-center rounded-[100px] bg-transparent overflow-hidden shrink-0 border-text-primary rotate-0 opacity-100 w-[84px] h-[28px]"
+    [attr.aria-label]="ariaLabel()" (click)="toggleLang()" (mouseenter)="isHover = true" (mouseleave)="isHover = false">
+    <img [src]="imgSrc()" [alt]="ariaLabel()" class="block h-full w-auto object-contain" />
+</button>

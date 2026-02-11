@@ -1,0 +1,40 @@
+/* Banner unten im Hero platzieren */
+.banner-wrapper {
+  position: absolute;
+  bottom: 80px;
+  left: -21px;
+  width: 150%;
+  height: 61.99999848887589px;
+  transform: rotate(-3deg);
+  opacity: 1;
+  background: #FFFFFF1F;
+  backdrop-filter: blur(5.300000190734863px);
+  box-sizing: border-box;
+  z-index: 10;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 12px 32px;
+}
+
+.banner-track {
+  display: flex;
+  animation: scroll 180s linear infinite;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 56px;
+  flex-shrink: 0;
+}
+
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}

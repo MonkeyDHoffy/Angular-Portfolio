@@ -1,0 +1,32 @@
+<footer class="w-full text-white debug-component">
+    <app-page-container className="py-12">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex justify-start flex-col gap-4">
+                <div class="flex items-center gap-2">
+                    <a routerLink="/" (click)="scrollTop()">
+                        <img class="h-12 w-auto" [src]="logo" alt="JHOFF logo" />
+                    </a>
+                </div>
+
+                <div
+                    class="font-karla flex flex-col justify-center text-sm text-neutral-400 gap-1 hover:text-white transition-all">
+                    <p>Web Developer</p>
+                    <p>Saarlouis, Germany</p>
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <p class="font-firacode text-teal-400 font-mono text-sm tracking-wide">
+                    © Jannik Hoff 2026
+                </p>
+            </div>
+
+            <div class="flex flex-col items-center gap-3">
+                <a class="hover:text-secondary" href="https://github.com/MonkeyDHoffy" target="_blank"
+                    rel="noopener noreferrer">Github</a>
+                <a class="hover:text-secondary" href="mailto:your.email@example.com">Email</a>
+                <a class="hover:text-secondary" routerLink="/legal-notice">Legal Notice</a>
+            </div>
+        </div>
+    </app-page-container>
+</footer>

@@ -1,0 +1,18 @@
+<section class="runner-section">
+    <app-page-container class="runner-shell">
+        <div #trackRef class="runner-track" (click)="handleJump()" (keydown)="onKeyDown($event)" role="button"
+            tabindex="0" aria-label="Click oder tippe Leertaste, um den Pixel springen zu lassen">
+            <div class="runner-player-wrapper" [style.bottom.px]="GROUND_OFFSET + player.y"
+                [style.left.px]="PLAYER_LEFT" [style.width.px]="PLAYER_SIZE">
+                <div class="runner-score" aria-live="polite">{{ score.toString().padStart(2, '0') }}</div>
+                <div class="runner-player" [style.height.px]="PLAYER_SIZE"></div>
+            </div>
+
+            <div *ngFor="let obstacle of obstacles; trackBy: trackById" class="runner-obstacle"
+                [style.left.px]="obstacle.x" [style.width.px]="OBSTACLE_WIDTH" [style.height.px]="OBSTACLE_HEIGHT"
+                [style.bottom.px]="GROUND_OFFSET"></div>
+
+            <div class="runner-ground"></div>
+        </div>
+    </app-page-container>
+</section>

@@ -1,0 +1,17 @@
+<div class="banner-wrapper">
+    <div class="banner-track">
+        <div class="banner-content" *ngFor="let _ of items()">
+            <div class="text-text-secondary font-karla text-[20px] sm:text-[24px] md:text-[32px] leading-[120%]">{{
+                lang.t('hero.bannerone') }}</div>
+            <div style="width: 8px; height: 8px; background-color: #3DCFB6; border-radius: 50%"></div>
+            <div class="text-text-secondary font-karla text-[20px] sm:text-[24px] md:text-[32px] leading-[120%]">{{
+                lang.t('hero.bannertwo') }}</div>
+            <div style="width: 8px; height: 8px; background-color: #3DCFB6; border-radius: 50%"></div>
+            <div class="text-text-secondary font-karla text-[20px] sm:text-[24px] md:text-[32px] leading-[120%]">{{
+                lang.t('hero.bannerthree') }}</div>
+            <div style="width: 8px; height: 8px; background-color: #3DCFB6; border-radius: 50%; margin-right: 56px">
+            </div>
+        </div>
+    </div>
+    <ng-content></ng-content>
+</div>

@@ -1,0 +1,65 @@
+<section class="w-full h-full pb-8 debug-component">
+    <app-page-container>
+        <div class="flex flex-col gap-6 overflow-hidden">
+            <div class="relative">
+                <div class="flex transition-transform duration-500 ease-out"
+                    [style.transform]="'translateX(calc(50% - ' + (trackOffset() + cardWidth() / 2) + 'px))'">
+                    <button *ngFor="let card of cards(); let i = index; trackBy: trackByIndex" type="button"
+                        class="shrink-0 rounded-2xl border border-secondary p-6 md:p-8 transition-all duration-500 ease-out relative mt-8 text-white text-left cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary"
+                        [ngClass]="i === activeIndex ? 'ring-1 ring-secondary/60 scale-100 bg-[#26524b99]' : 'scale-95 opacity-70 bg-background-greencontainer hover:opacity-90 hover:ring-1 hover:ring-white/20'"
+                        [style.width.px]="cardWidth()" [style.height.px]="cardHeight" [style.marginRight.px]="cardGap()"
+                        (click)="goTo(i)" (keydown)="($event.key === 'Enter' || $event.key === ' ' ? goTo(i) : null)"
+                        tabindex="0" [attr.aria-pressed]="i === activeIndex">
+                        <img *ngIf="i === activeIndex" [src]="quotesImg" alt="Quotes" class=""
+                            [style.position]="'absolute'" [style.top.px]="-24" [style.left.px]="-52"
+                            [style.width.px]="Math.min(89, Math.floor(vw * 0.12))"
+                            [style.height.px]="Math.min(64, Math.floor(vw * 0.08))" [style.pointerEvents]="'none'" />
+                        <h3 class="font-firacode text-lg md:text-xl text-white mb-2">{{ card.title }}</h3>
+                        <p class="text-primary font-karla break-words"
+                            [ngClass]="(card.text || '').length > 220 ? 'text-sm md:text-base leading-snug' : 'text-base md:text-lg'">
+                            {{ card.text }}
+                        </p>
+                        <div
+                            class="absolute left-6 md:left-8 right-6 md:right-8 bottom-6 md:bottom-8 flex items-center">
+                            <div class="flex-1 h-px bg-white"></div>
+                            <div class="ml-3 text-primary whitespace-nowrap font-karla">{{ card.sender }}</div>
+                        </div>
+                    </button>
+                </div>
+
+                <div aria-hidden
+                    class="pointer-events-none absolute left-0 w-[100px] bg-gradient-to-r from-black/25 to-transparent transition-opacity duration-0.0001"
+                    [class.opacity-100]="activeIndex > 0" [class.opacity-0]="activeIndex === 0"
+                    [style.top.px]="cardTopOffset" [style.height.px]="cardHeight - 10"></div>
+                <div aria-hidden
+                    class="pointer-events-none absolute right-0 w-[100px] bg-gradient-to-l from-black/25 to-transparent transition-opacity duration-0.0001"
+                    [class.opacity-100]="activeIndex < cards().length - 1"
+                    [class.opacity-0]="activeIndex >= cards().length - 1" [style.top.px]="cardTopOffset"
+                    [style.height.px]="cardHeight - 10"></div>
+            </div>
+
+            <div class="flex items-center justify-center gap-6">
+                <button type="button" (click)="goPrev()"
+                    class="h-10 w-10 rounded-full border-white/20 text-white hover:border-secondary hover:text-secondary transition flex items-center justify-center hover:scale-110"
+                    aria-label="Previous card">
+                    <img [src]="arrowForwardImg" alt="Previous" class="w-6 h-6 transform rotate-180" />
+                </button>
+
+                <div class="flex items-center gap-2">
+                    <button *ngFor="let card of cards(); let i = index; trackBy: trackByIndex" type="button"
+                        (click)="goTo(i)"
+                        class="h-2.5 w-2.5 rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary"
+                        [ngClass]="i === activeIndex ? 'bg-secondary' : 'bg-white/30'"
+                        [attr.aria-label]="'Go to card ' + (i + 1)" tabindex="0" [attr.aria-pressed]="i === activeIndex"
+                        (keydown)="($event.key === 'Enter' || $event.key === ' ' ? goTo(i) : null)"></button>
+                </div>
+
+                <button type="button" (click)="goNext()"
+                    class="h-10 w-10 rounded-full border-white/20 text-white hover:border-secondary hover:text-secondary transition flex items-center justify-center hover:scale-110"
+                    aria-label="Next card">
+                    <img [src]="arrowForwardImg" alt="Next" class="w-6 h-6" />
+                </button>
+            </div>
+        </div>
+    </app-page-container>
+</section>

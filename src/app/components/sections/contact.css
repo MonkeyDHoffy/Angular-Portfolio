@@ -1,0 +1,123 @@
+:root {
+  --toast-duration: 4.6s;
+}
+
+.contact-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translate(-50%, 120%);
+  width: min(90vw, 360px);
+  padding: 1.25rem 1.5rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(55.22deg, #1C1C1C 36.26%, #08463B 93.28%);
+  color: #ffffff;
+  border: 1px solid rgba(61, 207, 182, 0.75);
+  box-shadow:
+    0 24px 60px rgba(15, 15, 15, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(18px);
+  animation: toastFloat var(--toast-duration) ease-in-out forwards;
+  z-index: 61;
+  overflow: hidden;
+}
+
+.contact-toast--success {
+  border-color: rgba(16, 185, 129, 0.65);
+}
+
+.contact-toast--error {
+  border-color: rgba(239, 68, 68, 0.7);
+}
+
+.contact-toast__title {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  color: #3dcfb6;
+}
+
+.contact-toast__message {
+  margin-top: 0.35rem;
+  font-family: 'Karla', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.contact-toast__close {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  border: none;
+  background: transparent;
+  color: #3dcfb6;
+  font-size: 1.1rem;
+  padding: 0.15rem;
+  cursor: var(--cursor-pointer, pointer);
+  opacity: 0.65;
+  transition: opacity 0.2s ease;
+}
+
+.contact-toast__close:hover,
+.contact-toast__close:focus-visible {
+  opacity: 1;
+}
+
+.contact-toast__timer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  transform-origin: left;
+  animation: toastTimer var(--toast-duration) linear forwards;
+  background: rgba(61, 207, 182, 0.3);
+}
+
+.contact-toast--success .contact-toast__timer {
+  background: rgba(16, 185, 129, 0.9);
+}
+
+.contact-toast--error .contact-toast__timer {
+  background: rgba(239, 68, 68, 0.9);
+}
+
+@keyframes toastFloat {
+  0% {
+    transform: translate(-50%, 120%);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(-50%, 30%);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -10%);
+    opacity: 1;
+  }
+  80% {
+    transform: translate(-50%, -20%);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -20%);
+    opacity: 0;
+  }
+}
+
+@keyframes toastTimer {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (min-width: 768px) {
+  .contact-toast {
+    width: min(420px, 60vw);
+  }
+}

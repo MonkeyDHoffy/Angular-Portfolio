@@ -1,0 +1,44 @@
+<div class="absolute top-0 left-0 right-0 z-[100]">
+    <app-header></app-header>
+</div>
+<section class="min-h-screen text-gray-200 px-6 py-24 font-karla relative overflow-hidden"
+    [style.background]="'linear-gradient(55.22deg, #1C1C1C 36.26%, #08463B 93.28%)'">
+    <div class="cursor-spotlight absolute inset-0 z-0"></div>
+    <div class="max-w-4xl mx-auto relative z-10">
+        <h1 class="text-4xl md:text-5xl font-firacode font-bold text-teal-400 mb-12 text-center">
+            {{ lang.t('legalNotice.title') }}
+        </h1>
+
+        <div class="space-y-4 mb-10">
+            <h2 class="text-xl font-firacode font-semibold text-teal-300 uppercase tracking-[0.3em]">
+                {{ lang.t('legalNotice.imprintTitle') }}
+            </h2>
+            <p class="leading-relaxed">
+                {{ lang.t('legalNotice.imprint.name') }}<br />
+                {{ lang.t('legalNotice.imprint.street') }}<br />
+                {{ lang.t('legalNotice.imprint.city') }}<br />
+                {{ lang.t('legalNotice.imprint.country') }}
+            </p>
+            <p class="leading-relaxed">
+                {{ lang.t('legalNotice.imprint.emailLabel') }}:
+                <a href="mailto:hoffjannik95&#64;gmail.com"
+                    class="text-teal-400 hover:underline">hoffjannik95&#64;gmail.com</a>
+                <br />
+                {{ lang.t('legalNotice.imprint.phoneLabel') }}: 0157 7447 8954
+            </p>
+        </div>
+
+        <div *ngFor="let key of infoKeys" class="space-y-4 mb-10">
+            <h2 class="text-xl font-firacode font-semibold text-teal-300">
+                {{ lang.t('legalNotice.sections.' + key + '.title') }}
+            </h2>
+            <p class="text-sm leading-relaxed text-white/90">
+                {{ lang.t('legalNotice.sections.' + key + '.body') }}
+            </p>
+        </div>
+
+        <p class="text-xs text-gray-300 text-center mt-16">
+            {{ lang.t('legalNotice.lastUpdated') }} <span>{{ lastUpdated }}</span>
+        </p>
+    </div>
+</section>

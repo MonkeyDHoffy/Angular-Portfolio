@@ -1,0 +1,21 @@
+{
+  "primary": "#ffffff",
+  "secondary": "#3DCFB6",
+  "background": {
+    "primary": "#3DCFB6",
+    "main": "#1C1C1C",
+    "greencontainer": "#3DCFB61A",
+    "dark": "#0F0F0F",
+    "light": "#2A2A2A"
+  },
+  "text": {
+    "primary": "#FFFFFF",
+    "secondary": "#3DCFB6",
+    "light": "#FFFFFF"
+  },
+  "accent": {
+    "success": "#10B981",
+    "warning": "#F59E0B",
+    "error": "#EF4444"
+  }
+}

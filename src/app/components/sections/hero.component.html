@@ -1,0 +1,64 @@
+<section
+    class="hero-gradient relative flex flex-col items-center justify-start md:justify-center h-screen text-text-primary overflow-hidden debug-component">
+    <div class="cursor-spotlight absolute inset-0 z-0"></div>
+    <div class="absolute top-0 left-0 right-0 z-[100]"><app-header></app-header></div>
+    <div class="pt-40 md:pt-20 text-center z-10 relative">
+        <h1
+            class="font-firacode font-normal text-[24px] sm:text-[32px] md:text-[40px] leading-[100%] tracking-[0] mb-4">
+            {{ lang.t('hero.subtitle') }}
+        </h1>
+
+        <p
+            class="font-karla font-bold text-[56px] sm:text-[80px] md:text-[96px] lg:text-[128px] leading-[100%] tracking-[-0.02em] mb-8">
+            {{ lang.t('hero.title') }}
+        </p>
+        <div class="gap-4 flex justify-start md:justify-center">
+            <a href="#projects"
+                class="border text-text-primary hover:text-secondary rounded-[100px] px-6 py-[13px] hover:border-secondary border-primary transition-colors duration-1000 w-auto min-w-[160px] md:w-[180px]">
+                {{ lang.t('hero.workbtn') }}
+            </a>
+            <a href="#contact"
+                class="border text-text-primary hover:text-secondary rounded-[100px] px-6 py-[13px] hover:border-secondary border-primary transition-colors duration-1000 w-auto min-w-[160px] md:w-[180px]">
+                {{ lang.t('hero.contactbtn') }}
+            </a>
+        </div>
+    </div>
+
+    <div class="ultrastylischelinielinks">
+        <div class="leftCircle"><img class="movingarrow" [src]="movingArrow" alt="" /></div>
+        <div class="leftLine"></div>
+    </div>
+
+    <div class="ultrastylischelinierechts" style="pointer-events: auto">
+        <div class="rightCircle flex flex-col gap-4">
+            <a href="mailto:hoffjannik95&#64;gmail.com" aria-label="Email"
+                class="pointercss lg:hidden flex items-center justify-center group" (click)="selectContact('email')">
+                <div class="relative flex items-center justify-center md:-top-4">
+                    <app-icon-with-hover [baseSrc]="mailIcon" [hoverSrc]="mailIconHover"
+                        alt="Email"></app-icon-with-hover>
+                    <span [ngClass]="indicatorClasses('email')" aria-hidden="true"></span>
+                </div>
+            </a>
+            <a href="https://github.com/MonkeyDHoffy" target="_blank" rel="noopener noreferrer" aria-label="GitHub"
+                class="pointercss flex items-center justify-center group" (click)="selectContact('github')">
+                <div class="relative flex items-center justify-center md:-top-4">
+                    <app-icon-with-hover [baseSrc]="gitIcon" [hoverSrc]="gitIconHover"
+                        alt="GitHub"></app-icon-with-hover>
+                    <span [ngClass]="indicatorClasses('github')" aria-hidden="true"></span>
+                </div>
+            </a>
+            <button type="button" aria-label="LinkedIn"
+                class="pointercss flex items-center justify-center group bg-transparent border-0 p-0"
+                (click)="selectContact('linkedin')">
+                <div class="relative flex items-center justify-center md:-top-4">
+                    <app-icon-with-hover [baseSrc]="linkedinIcon" [hoverSrc]="linkedinIconHover"
+                        alt="LinkedIn"></app-icon-with-hover>
+                    <span [ngClass]="indicatorClasses('linkedin')" aria-hidden="true"></span>
+                </div>
+            </button>
+        </div>
+        <a href="mailto:hoffjannik95&#64;gmail.com" class="rightText hidden lg:block">hoffjannik95&#64;gmail.com</a>
+        <div class="rightLine"></div>
+    </div>
+    <app-banner></app-banner>
+</section>

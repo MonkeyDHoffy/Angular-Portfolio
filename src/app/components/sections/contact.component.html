@@ -1,0 +1,79 @@
+<section class="text-white py-8 debug-component" id="contact">
+    <app-page-container>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div class="rounded-2xl w-full lg:w-[var(--card-size)]">
+                <p class="text-sm font-karla text-secondary mb-4">
+                    {{ lang.t('contact.label') }}
+                </p>
+
+                <h2 class="font-firacode font-bold text-secondary leading-tight mb-6 text-[clamp(22px,7vw,56px)]">
+                    {{ lang.t('contact.title') }}
+                </h2>
+
+                <p class="text-lg font-semibold mb-3">
+                    {{ lang.t('contact.question') }}
+                </p>
+
+                <p class="opacity-70 transition-opacity duration-300 mb-6 leading-relaxed">
+                    {{ lang.t('contact.blurb') }}
+                </p>
+
+                <p>
+                    {{ lang.t('contact.needdev') }}
+                    <span class="text-secondary font-medium">
+                        {{ lang.t('contact.needdev_cta') }}
+                    </span>
+                </p>
+            </div>
+
+            <div class="rounded-2xl w-full lg:w-[var(--card-size)]">
+                <form class="space-y-8" (submit)="handleSubmit($event)">
+                    <input type="text" name="company" [(ngModel)]="formData.company" class="hidden" tabindex="-1"
+                        autocomplete="off" />
+
+                    <app-form-field [label]="lang.t('contact.form.name_label')" type="text" name="name"
+                        [(model)]="formData.name" [placeholder]="lang.t('contact.form.name_ph')" autocomplete="name"
+                        [required]="true"></app-form-field>
+
+                    <app-form-field [label]="lang.t('contact.form.email_label')" type="email" name="email"
+                        [(model)]="formData.email" [placeholder]="lang.t('contact.form.email_ph')" autocomplete="email"
+                        [required]="true"></app-form-field>
+
+                    <app-form-field [label]="lang.t('contact.form.message_label')" [textarea]="true" [rows]="3"
+                        name="message" [(model)]="formData.message" [placeholder]="lang.t('contact.form.message_ph')"
+                        [required]="true"></app-form-field>
+
+                    <div class="flex items-start gap-3 text-sm text-gray-400">
+                        <input type="checkbox" required class="mt-1 accent-secondary hover:cursor-pointer" />
+                        <p class="font-karla">
+                            {{ lang.t('contact.form.privacy_text').replace(lang.t('contact.form.privacy_link'), '') }}
+                            <span class="text-secondary hover:underline cursor-pointer">
+                                {{ lang.t('contact.form.privacy_link') }}
+                            </span>
+                        </p>
+                    </div>
+
+                    <button type="submit" [disabled]="isSubmitting"
+                        class="font-karla px-6 py-2 rounded-full border transition"
+                        [ngClass]="isSubmitting ? 'opacity-50 cursor-not-allowed' : 'border-white/30 text-white hover:border-secondary hover:text-secondary'">
+                        {{ isSubmitting ? lang.t('contact.form.sending') : lang.t('contact.form.submit') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </app-page-container>
+
+    <div *ngIf="notification as note" class="contact-toast" [ngClass]="'contact-toast--' + note.type"
+        [attr.role]="note.type === 'success' ? 'status' : 'alert'"
+        [attr.aria-live]="note.type === 'success' ? 'polite' : 'assertive'" [style.--toast-duration.ms]="toastDuration">
+        <p class="contact-toast__title">
+            {{ note.type === 'success' ? lang.t('contact.form.status_success') : lang.t('contact.form.status_error') }}
+        </p>
+        <p class="contact-toast__message">{{ note.message }}</p>
+        <button type="button" class="contact-toast__close" [attr.aria-label]="lang.t('contact.form.dismiss')"
+            (click)="dismiss()">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <span class="contact-toast__timer"></span>
+    </div>
+</section>

@@ -1,0 +1,51 @@
+<section class="text-white py-8 relative debug-component" id="projects">
+    <app-page-container>
+        <div class="flex justify-start gap-8">
+            <div class="w-full max-w-[831px] h-auto lg:h-[var(--card-size)]">
+                <p class="font-karla text-sm text-secondary mb-2">{{ lang.t('projects.label') }}</p>
+
+                <h2 class="font-firacode text-5xl font-bold text-secondary mb-4">
+                    {{ lang.t('projects.title') }}
+                </h2>
+
+                <p class="font-karla opacity-70 hover:opacity-100 transition-opacity duration-300 max-w-xl mb-10">
+                    {{ lang.t('projects.intro') }}
+                </p>
+
+                <div class="border-t border-secondary"></div>
+
+                <div>
+                    <app-project-list-item className="project1" title="Join"
+                        [stackSegments]="['Angular', 'TypeScript', 'HTML', 'CSS', 'Firebase']"
+                        previewImg="assets/projects/join.png" previewAlt="Join preview"
+                        (onClick)="openProject('join')"></app-project-list-item>
+                    <app-project-list-item className="project2" title="El Pollo Loco"
+                        [stackSegments]="['HTML', 'CSS', 'JavaScript']" previewImg="assets/projects/pollo.png"
+                        previewAlt="El Pollo Loco preview" (onClick)="openProject('pollo')"></app-project-list-item>
+                    <app-project-list-item className="project3" title="Pokédex"
+                        [stackSegments]="['Rest API', 'JavaScript', 'HTML', 'CSS']"
+                        previewImg="assets/projects/bubble.png" previewAlt="Pokédex preview"
+                        (onClick)="openProject('bubble')"></app-project-list-item>
+                </div>
+            </div>
+
+            <ng-container *ngIf="active as activeKey">
+                <div class="fixed inset-0 w-screen h-screen z-[20000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 md:p-10"
+                    (click)="closeProject()" role="dialog" aria-modal="true">
+                    <div class="w-full max-w-[1100px] max-h-[calc(100vh-2rem)] overflow-y-auto"
+                        (click)="$event.stopPropagation()">
+                        <app-project-slide [index]="projectsMap[activeKey].index"
+                            [titleKey]="projectsMap[activeKey].titleKey"
+                            [questionKey]="projectsMap[activeKey].questionKey"
+                            [descriptionKey]="projectsMap[activeKey].descriptionKey"
+                            [techStack]="projectsMap[activeKey].techStack" [imageSrc]="projectsMap[activeKey].imageSrc"
+                            [imageAlt]="projectsMap[activeKey].imageAlt"
+                            [primaryActions]="projectsMap[activeKey].primaryActions"
+                            [nextLabel]="lang.t('projects.nextLabel')" (close)="closeProject()"
+                            (next)="goNext()"></app-project-slide>
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+    </app-page-container>
+</section>

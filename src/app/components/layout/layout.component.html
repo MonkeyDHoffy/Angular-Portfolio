@@ -1,0 +1,9 @@
+<div #layoutRoot class="bg-background-main text-text-primary min-h-screen relative"
+    [attr.data-debug]="debugLayout ? 'true' : 'false'" (pointermove)="onPointerMove($event)"
+    (pointerdown)="onPointerDown($event)" (pointerup)="onPointerUp($event)" (pointerleave)="onPointerLeave($event)"
+    (pointercancel)="onPointerLeave($event)">
+    <div class="cursor-spotlight"></div>
+    <div class="relative z-10">
+        <ng-content></ng-content>
+    </div>
+</div>

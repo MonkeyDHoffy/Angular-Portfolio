@@ -1,0 +1,35 @@
+<ng-container *ngIf="variant === 'list'; else inline">
+    <ul class="space-y-3">
+        <li *ngFor="let item of navItems()" class="relative flex flex-col items-center group">
+            <a [routerLink]="['/']" [fragment]="item.fragment" (click)="onSelect(item.fragment)"
+                class="flex justify-center px-3 py-2 rounded-md font-firacode text-text-primary hover:text-[#3DCFB6] transition-colors"
+                [attr.aria-current]="isActive(item.fragment) ? 'page' : null">
+                {{ lang.t(item.labelKey) }}
+            </a>
+            <span
+                class="pointer-events-none absolute top-full mt-0 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-secondary transition-all duration-200 ease-out group-hover:opacity-100 group-hover:scale-100 group-focus-within:opacity-100 group-focus-within:scale-100"
+                [class.opacity-100]="isActive(item.fragment)" [class.scale-100]="isActive(item.fragment)"
+                [class.opacity-0]="!isActive(item.fragment)" [class.scale-75]="!isActive(item.fragment)"
+                aria-hidden="true"></span>
+        </li>
+    </ul>
+</ng-container>
+
+<ng-template #inline>
+    <div class="flex items-center gap-4 md:gap-6">
+        <ng-container *ngFor="let item of navItems()">
+            <div class="relative flex flex-col items-center group">
+                <a [routerLink]="['/']" [fragment]="item.fragment" (click)="onSelect(item.fragment)"
+                    class="font-firacode text-text-primary hover:text-[#3DCFB6] transition-colors"
+                    [attr.aria-current]="isActive(item.fragment) ? 'page' : null">
+                    {{ lang.t(item.labelKey) }}
+                </a>
+                <span
+                    class="pointer-events-none absolute top-full mt-0 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-secondary transition-all duration-200 ease-out group-hover:opacity-100 group-hover:scale-100 group-focus-within:opacity-100 group-focus-within:scale-100"
+                    [class.opacity-100]="isActive(item.fragment)" [class.scale-100]="isActive(item.fragment)"
+                    [class.opacity-0]="!isActive(item.fragment)" [class.scale-75]="!isActive(item.fragment)"
+                    aria-hidden="true"></span>
+            </div>
+        </ng-container>
+    </div>
+</ng-template>
