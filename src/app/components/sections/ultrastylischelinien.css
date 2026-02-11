@@ -75,7 +75,7 @@
 .ultrastylischelinierechts .rightCircle {
   position: absolute;
   right: 0;
-  top: 0;
+  top: -48px;
   width: clamp(18px, 2.5vw, 30px);
   height: var(--right-circle-h);
   transform: translateX(50%) rotate(0deg);
@@ -97,6 +97,10 @@
     --icon-gap: 12px;
     --icon-top-adjust: -64px;
   }
+  .ultrastylischelinierechts .rightCircle {
+    width: clamp(22px, 3.2vw, 40px);
+    top: -70px;
+  }
   .ultrastylischelinierechts .rightCircle img {
     position: relative;
     top: var(--icon-top-adjust);
@@ -104,9 +108,6 @@
   .hero-contact-indicator {
     opacity: 0;
     visibility: hidden;
-  }
-  .ultrastylischelinierechts .rightCircle {
-    width: clamp(22px, 3.2vw, 40px);
   }
 
   .movingarrow {
@@ -147,10 +148,7 @@
   cursor: var(--cursor-pointer, pointer);
 }
 
-.hero-contact-indicator {
-  top: calc(40% + var(--icon-top-adjust, 0px));
-  transform: translateY(-50%) translateY(200px);
-}
+
 
 @media (min-width: 768px) and (max-width: 1023.98px) {
   .ultrastylischelinielinks {
