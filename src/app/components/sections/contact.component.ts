@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { LanguageService } from '../../services/language.service';
 import { PageContainerComponent } from '../layout/page-container.component';
 import { FormFieldComponent } from '../ui/form-field.component';
@@ -25,7 +26,7 @@ interface Toast {
 @Component({
   selector: 'app-contact',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageContainerComponent, FormFieldComponent],
+  imports: [CommonModule, FormsModule, RouterModule, PageContainerComponent, FormFieldComponent],
   templateUrl: './contact.component.html',
   styleUrls: ['./contact.css']
 })

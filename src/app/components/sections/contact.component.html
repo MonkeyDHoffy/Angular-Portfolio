@@ -46,10 +46,11 @@
                     <div class="flex items-start gap-3 text-sm text-gray-400">
                         <input type="checkbox" required class="mt-1 accent-secondary hover:cursor-pointer" />
                         <p class="font-karla">
-                            {{ lang.t('contact.form.privacy_text').replace(lang.t('contact.form.privacy_link'), '') }}
-                            <span class="text-secondary hover:underline cursor-pointer">
+                            {{ lang.t('contact.form.privacy_text').split(lang.t('contact.form.privacy_link'))[0] }}
+                            <a routerLink="/privacy-policy" class="text-secondary hover:underline cursor-pointer">
                                 {{ lang.t('contact.form.privacy_link') }}
-                            </span>
+                            </a>
+                            {{ lang.t('contact.form.privacy_text').split(lang.t('contact.form.privacy_link'))[1] }}
                         </p>
                     </div>
 

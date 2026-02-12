@@ -110,7 +110,7 @@ const translations: TranslationTree = {
         de: 'Zuverlässig, performant und gut gepflegt. Jannik Hoff hält sein Entwicklungs‑Setup schlank und sorgt für reibungslose Workflows.',
         en: 'Reliable, performant, and well maintained. Jannik Hoff keeps his development setup lean and ensures smooth workflows.',
       },
-      sender: { de: 'Alexander Schulz', en: 'Alexander Schulz' },
+      sender: { de: 'Alexander Schulz - Fullstack Developer', en: 'Alexander Schulz - Fullstack Developer' },
     },
     card3: {
       title:  { de: '', en: '' },
@@ -126,7 +126,7 @@ const translations: TranslationTree = {
         de: 'Jannik Hoff kombiniert eine steile Lernkurve mit einer beneidenswerten Zielstrebigkeit. Im Web Development wartet er nicht auf Lösungen, er erarbeitet sie sich proaktiv selbst. Ein Entwickler mit dem richtigen Mindset, der sich schnell in neue Technologien einarbeitet und Ergebnisse liefert.',
         en: 'Jannik Hoff combines a steep learning curve with admirable determination. In web development he never waits for solutions—he proactively creates them. A developer with the right mindset who ramps up on new technologies quickly and delivers results.',
       },
-      sender: { de: 'Nicolas Tran', en: 'Nicolas Tran' },
+      sender: { de: 'Nicolas Tran - IT Security Specialist', en: 'Nicolas Tran - IT Security Specialist' },
     },
     card5: {
       title:  { de: '', en: '' },
@@ -243,11 +243,91 @@ const translations: TranslationTree = {
     },
     lastUpdated: { de: 'Zuletzt aktualisiert:', en: 'Last updated:' },
   },
+  privacyPolicy: {
+    title: { de: 'Datenschutzerklärung', en: 'Privacy Policy' },
+    lastUpdated: { de: 'Stand:', en: 'Last updated:' },
+    sections: {
+      responsible: {
+        title: { de: '1. Verantwortlicher', en: '1. Responsible Party' },
+        body: {
+          de: 'Verantwortlich für die Datenverarbeitung auf dieser Website ist:\n\nJannik Hoff\nIm Vogelsang 9\n66740 Saarlouis\nDeutschland\nE-Mail: hoffjannik95@gmail.com\nTelefon: 015774478954',
+          en: 'The responsible party for data processing on this website is:\n\nJannik Hoff\nIm Vogelsang 9\n66740 Saarlouis\nGermany\nEmail: hoffjannik95@gmail.com\nPhone: 015774478954',
+        },
+      },
+      general: {
+        title: { de: '2. Allgemeine Hinweise zur Datenverarbeitung', en: '2. General Information on Data Processing' },
+        body: {
+          de: 'Der Schutz Ihrer persönlichen Daten ist mir ein wichtiges Anliegen. Personenbezogene Daten werden auf dieser Website nur im technisch notwendigen Umfang sowie zur Bearbeitung von Anfragen verarbeitet.\n\nPersonenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können (z. B. Name, E-Mail-Adresse, IP-Adresse).',
+          en: 'The protection of your personal data is very important to me. Personal data is only processed on this website to the extent technically necessary and to handle inquiries.\n\nPersonal data includes any information that can personally identify you (e.g., name, email address, IP address).',
+        },
+      },
+      hosting: {
+        title: { de: '3. Hosting', en: '3. Hosting' },
+        body: {
+          de: 'Diese Website wird auf einem virtuellen Server (VPS) bei IONOS SE, Elgendorfer Str. 57, 56410 Montabaur, Deutschland gehostet.\n\nBeim Aufruf der Website werden automatisch Server-Log-Dateien gespeichert. Diese enthalten:\n• IP-Adresse\n• Datum und Uhrzeit der Anfrage\n• aufgerufene Seite/Datei\n• Browsertyp und -version\n• Betriebssystem\n• Referrer-URL\n\nDie Verarbeitung dieser Daten erfolgt zur Sicherstellung des technischen Betriebs, zur Fehleranalyse sowie zur Abwehr von Angriffsversuchen.\n\nRechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an sicherem und stabilem Betrieb der Website).',
+          en: 'This website is hosted on a virtual private server (VPS) at IONOS SE, Elgendorfer Str. 57, 56410 Montabaur, Germany.\n\nWhen accessing the website, server log files are automatically stored containing:\n• IP address\n• Date and time of request\n• Page/file accessed\n• Browser type and version\n• Operating system\n• Referrer URL\n\nThis data is processed to ensure technical operation, error analysis, and defense against attacks.\n\nLegal basis: Art. 6 para. 1 lit. f GDPR (legitimate interest in secure and stable website operation).',
+        },
+      },
+      contact: {
+        title: { de: '4. Kontaktaufnahme und Kontaktformular', en: '4. Contact and Contact Form' },
+        body: {
+          de: 'Wenn Sie mich per Kontaktformular oder per E-Mail kontaktieren, werden die von Ihnen übermittelten Daten (z. B. Name, E-Mail-Adresse, Nachricht) verarbeitet, um Ihre Anfrage zu bearbeiten.\n\nFür das Kontaktformular wird ein selbst betriebenes Backend (FastAPI-Mailservice) verwendet. Die übermittelten Daten werden ausschließlich zur Bearbeitung Ihrer Anfrage genutzt und nicht an Dritte weitergegeben.\n\nDie Daten werden nur so lange gespeichert, wie dies zur Bearbeitung der Anfrage erforderlich ist oder gesetzliche Aufbewahrungspflichten bestehen.\n\nRechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Bearbeitung einer Anfrage / Vertragsanbahnung) sowie Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an effizienter Kommunikation).',
+          en: 'When you contact me via the contact form or email, the data you provide (e.g., name, email address, message) will be processed to handle your inquiry.\n\nThe contact form uses a self-hosted backend (FastAPI mail service). The transmitted data is used exclusively to process your inquiry and is not shared with third parties.\n\nData is stored only as long as necessary to process the inquiry or as required by legal retention obligations.\n\nLegal basis: Art. 6 para. 1 lit. b GDPR (processing an inquiry/contract initiation) and Art. 6 para. 1 lit. f GDPR (legitimate interest in efficient communication).',
+        },
+      },
+      googleFonts: {
+        title: { de: '5. Google Fonts', en: '5. Google Fonts' },
+        body: {
+          de: 'Diese Website nutzt Google Fonts zur einheitlichen Darstellung von Schriftarten. Anbieter ist Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland.\n\nBeim Aufruf einer Seite lädt Ihr Browser die benötigten Schriftarten direkt von Servern von Google, damit Texte und Schriftarten korrekt angezeigt werden können. Dabei wird Ihre IP-Adresse an Google übertragen. Eine Speicherung von Cookies durch diese Website findet in diesem Zusammenhang nicht statt.\n\nDie Nutzung von Google Fonts erfolgt im Interesse einer einheitlichen und ansprechenden Darstellung meiner Website.\n\nRechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse).\n\nWeitere Informationen finden Sie in der Datenschutzerklärung von Google.',
+          en: 'This website uses Google Fonts for uniform font display. The provider is Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Ireland.\n\nWhen accessing a page, your browser loads the required fonts directly from Google servers so that text and fonts are displayed correctly. Your IP address is transmitted to Google in this process. No cookies are stored by this website in this context.\n\nGoogle Fonts is used in the interest of a uniform and appealing presentation of my website.\n\nLegal basis: Art. 6 para. 1 lit. f GDPR (legitimate interest).\n\nFurther information can be found in Google\'s privacy policy.',
+        },
+      },
+      cookies: {
+        title: { de: '6. Cookies', en: '6. Cookies' },
+        body: {
+          de: 'Diese Website verwendet keine Cookies.',
+          en: 'This website does not use cookies.',
+        },
+      },
+      rights: {
+        title: { de: '7. Ihre Rechte', en: '7. Your Rights' },
+        body: {
+          de: 'Sie haben im Rahmen der DSGVO folgende Rechte:\n• Recht auf Auskunft (Art. 15 DSGVO)\n• Recht auf Berichtigung (Art. 16 DSGVO)\n• Recht auf Löschung (Art. 17 DSGVO)\n• Recht auf Einschränkung der Verarbeitung (Art. 18 DSGVO)\n• Recht auf Datenübertragbarkeit (Art. 20 DSGVO)\n• Recht auf Widerspruch (Art. 21 DSGVO)\n\nZur Ausübung Ihrer Rechte genügt eine formlose Mitteilung per E-Mail an mich.',
+          en: 'Under the GDPR, you have the following rights:\n• Right to access (Art. 15 GDPR)\n• Right to rectification (Art. 16 GDPR)\n• Right to erasure (Art. 17 GDPR)\n• Right to restriction of processing (Art. 18 GDPR)\n• Right to data portability (Art. 20 GDPR)\n• Right to object (Art. 21 GDPR)\n\nTo exercise your rights, simply send an informal message via email to me.',
+        },
+      },
+      ssl: {
+        title: { de: '8. SSL- bzw. TLS-Verschlüsselung', en: '8. SSL/TLS Encryption' },
+        body: {
+          de: 'Diese Website nutzt aus Sicherheitsgründen und zum Schutz der Übertragung vertraulicher Inhalte eine SSL- bzw. TLS-Verschlüsselung. Sie erkennen eine verschlüsselte Verbindung an „https://" in der Adresszeile Ihres Browsers.',
+          en: 'This website uses SSL/TLS encryption for security reasons and to protect the transmission of confidential content. You can recognize an encrypted connection by "https://" in your browser\'s address bar.',
+        },
+      },
+      updated: {
+        title: { de: '9. Aktualität', en: '9. Last Updated' },
+        body: {
+          de: 'Diese Datenschutzerklärung hat den Stand: 12.02.2026',
+          en: 'This privacy policy is dated: 12.02.2026',
+        },
+      },
+    },
+  },
 };
 
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
-  private readonly lang = signal<Lang>('de');
+  private readonly STORAGE_KEY = 'app-language';
+  private readonly lang = signal<Lang>(this.getInitialLang());
+
+  private getInitialLang(): Lang {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      if (stored === 'de' || stored === 'en') {
+        return stored;
+      }
+    }
+    return 'de';
+  }
 
   current(): Lang {
     return this.lang();
@@ -255,10 +335,17 @@ export class LanguageService {
 
   setLang(next: Lang): void {
     this.lang.set(next);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(this.STORAGE_KEY, next);
+    }
   }
 
   toggle(): void {
-    this.lang.set(this.lang() === 'en' ? 'de' : 'en');
+    const nextLang = this.lang() === 'en' ? 'de' : 'en';
+    this.lang.set(nextLang);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(this.STORAGE_KEY, nextLang);
+    }
   }
 
   t(key: string): string {
