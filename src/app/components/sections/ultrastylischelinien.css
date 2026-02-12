@@ -1,35 +1,51 @@
-.ultrastylischelinielinks {
+.hero-rail {
   position: absolute;
   bottom: 0;
-  left: var(--page-container-offset);
   height: clamp(160px, 24vw, 286px);
-  --left-circle-h: clamp(28px, 3.5vw, 48px);
+  width: var(--cap-w);
+  --cap-h: clamp(28px, 3.5vw, 48px);
+  --cap-w: clamp(18px, 2.5vw, 30px);
   --icon-gap: 8px;
-  --line-top: calc(var(--left-circle-h) + var(--icon-gap));
+  --line-top: calc(var(--cap-h) + var(--icon-gap));
+  --cap-offset: 0px;
+  --line-color: #3DCFB6;
   pointer-events: none;
 }
 
-.ultrastylischelinielinks .leftLine {
+.hero-rail::after {
+  content: '';
   position: absolute;
-  left: 0;
   top: var(--line-top);
   bottom: 0;
+  left: 50%;
   width: 1px;
-  background: #3DCFB6;
+  background: var(--line-color);
+  transform: translateX(-50%);
   z-index: 0;
 }
 
-.ultrastylischelinielinks .leftCircle {
+.hero-rail__cap,
+.hero-rail__icons {
   position: absolute;
-  left: 0;
-  top: 0;
-  width: clamp(18px, 2.5vw, 30px);
-  height: var(--left-circle-h);
-  border-radius: 32px;
-  opacity: 1;
-  border: 1px solid #3DCFB6;
-  transform: translateX(-50%) rotate(0deg);
+  top: var(--cap-offset);
+  left: 50%;
+  width: var(--cap-w);
+  height: var(--cap-h);
+  transform: translateX(-50%);
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-rail--left {
+  left: var(--page-container-offset);
+  --line-color: #3DCFB6;
+}
+
+.hero-rail--left .hero-rail__cap {
+  border: 1px solid #3DCFB6;
+  border-radius: 32px;
 }
 
 .movingarrow {
@@ -51,60 +67,39 @@
   }
 }
 
-.ultrastylischelinierechts {
-  position: absolute;
-  bottom: 0;
+.hero-rail--right {
   right: var(--page-container-offset);
   height: clamp(140px, 22vw, 256px);
-  --right-circle-h: clamp(28px, 3.5vw, 48px);
+  --cap-h: clamp(28px, 3.5vw, 48px);
+  --cap-w: clamp(18px, 2.5vw, 30px);
   --icon-gap: 8px;
-  --line-top: calc(var(--right-circle-h) + var(--icon-gap));
+  --line-top: calc(var(--cap-h) + var(--icon-gap));
+  --cap-offset: -20px;
   --icon-top-adjust: -8px;
-  pointer-events: none;
-}
-.ultrastylischelinierechts .rightLine {
-  position: absolute;
-  right: 0;
-  top: var(--line-top);
-  bottom: 0;
-  width: 1px;
-  background: #ffffff;
-  z-index: 0;
+  --line-color: #ffffff;
+  pointer-events: auto;
 }
 
-.ultrastylischelinierechts .rightCircle {
-  position: absolute;
-  right: 0;
-  top: -48px;
-  width: clamp(18px, 2.5vw, 30px);
-  height: var(--right-circle-h);
-  transform: translateX(50%) rotate(0deg);
-  z-index: 1;
+.hero-rail--right .hero-rail__icons {
+  pointer-events: auto;
 }
 
 @media (max-width: 768px) {
-  .ultrastylischelinielinks {
+  .hero-rail {
     height: clamp(220px, 40vw, 420px);
-    --left-circle-h: clamp(34px, 4.6vw, 60px);
-  }
-  .ultrastylischelinielinks .leftCircle {
-    width: clamp(22px, 3.2vw, 40px);
+    --cap-h: clamp(34px, 4.6vw, 60px);
+    --cap-w: clamp(22px, 3.2vw, 40px);
   }
 
-  .ultrastylischelinierechts {
+  .hero-rail--right {
     height: clamp(200px, 38vw, 400px);
-    --right-circle-h: clamp(34px, 4.6vw, 60px);
+    --cap-h: clamp(34px, 4.6vw, 60px);
+    --cap-w: clamp(22px, 3.2vw, 40px);
     --icon-gap: 12px;
     --icon-top-adjust: -64px;
+    --cap-offset: -40px;
   }
-  .ultrastylischelinierechts .rightCircle {
-    width: clamp(22px, 3.2vw, 40px);
-    top: -70px;
-  }
-  .ultrastylischelinierechts .rightCircle img {
-    position: relative;
-    top: var(--icon-top-adjust);
-  }
+
   .hero-contact-indicator {
     opacity: 0;
     visibility: hidden;
@@ -116,12 +111,22 @@
   }
 }
 
-.ultrastylischelinierechts .rightCircle img {
+@media (max-width: 640px) {
+  .hero-rail--left {
+    left: max(12px, var(--page-container-offset));
+  }
+
+  .hero-rail--right {
+    right: max(12px, var(--page-container-offset));
+  }
+}
+
+.hero-rail--right .hero-rail__icons img {
   position: relative;
   top: var(--icon-top-adjust);
 }
 
-.ultrastylischelinierechts .rightText {
+.hero-rail__label {
   font-family: Karla;
   font-weight: 400;
   font-style: Regular;
@@ -129,8 +134,8 @@
   line-height: 120%;
   letter-spacing: 0%;
   position: absolute;
-  right: 0;
-  top: -112%;
+  right: 50%;
+  top: -100%;
   transform: translateX(50%) rotate(180deg);
   writing-mode: vertical-rl;
   text-orientation: sideways;
@@ -138,7 +143,7 @@
   white-space: nowrap;
 }
 
-.rightText:hover {
+.hero-rail__label:hover {
   color: #3DCFB6;
   transition: color 0.3s ease;
   cursor: pointer;
@@ -151,21 +156,35 @@
 
 
 @media (min-width: 768px) and (max-width: 1023.98px) {
-  .ultrastylischelinielinks {
+  .hero-rail {
     height: clamp(200px, 34vw, 440px);
-    --left-circle-h: clamp(32px, 4.2vw, 58px);
-  }
-  .ultrastylischelinielinks .leftCircle {
-    width: clamp(20px, 3.2vw, 40px);
+    --cap-h: clamp(32px, 4.2vw, 58px);
+    --cap-w: clamp(20px, 3.2vw, 40px);
   }
 
-  .ultrastylischelinierechts {
+  .hero-rail--right {
     height: clamp(190px, 32vw, 420px);
-    --right-circle-h: clamp(32px, 4.2vw, 58px);
+    --cap-h: clamp(32px, 4.2vw, 58px);
+    --cap-w: clamp(20px, 3.2vw, 40px);
     --icon-gap: 14px;
     --icon-top-adjust: -64px;
+    --cap-offset: -30px;
   }
-  .ultrastylischelinierechts .rightCircle {
-    width: clamp(20px, 3.2vw, 40px);
+}
+
+@media (max-width: 360px) {
+  .hero-rail {
+    height: clamp(140px, 48vw, 220px);
+    --cap-h: clamp(26px, 5.2vw, 46px);
+    --cap-w: clamp(18px, 4vw, 34px);
+  }
+
+  .hero-rail--right {
+    height: clamp(130px, 44vw, 210px);
+    --cap-h: clamp(26px, 5.2vw, 46px);
+    --cap-w: clamp(18px, 4vw, 34px);
+    --icon-gap: 10px;
+    --icon-top-adjust: -52px;
+    --cap-offset: -50px;
   }
 }
