@@ -104,21 +104,22 @@ const translations: TranslationTree = {
       },
       sender: { de: 'GitHub Copilot', en: 'GitHub Copilot' },
     },
-    card2: {
-      title:  { de: '', en: '' },
-      text:   {
-        de: 'Zuverlässig, performant und gut gepflegt. Jannik Hoff hält sein Entwicklungs‑Setup schlank und sorgt für reibungslose Workflows.',
-        en: 'Reliable, performant, and well maintained. Jannik Hoff keeps his development setup lean and ensures smooth workflows.',
-      },
-      sender: { de: 'Alexander Schulz - Fullstack Developer', en: 'Alexander Schulz - Fullstack Developer' },
-    },
-    card3: {
+  card2: {
       title:  { de: '', en: '' },
       text:   {
         de: 'Strukturiert, präzise und lösungsorientiert. Jannik Hoff kombiniert saubere Architektur mit solider UX und sorgt für wartbaren Code.',
         en: 'Structured, precise, and solution‑oriented. Jannik Hoff combines clean architecture with solid UX and delivers maintainable code.',
       },
       sender: { de: 'ChatGPT', en: 'ChatGPT' },
+      
+    },
+     card3: {
+      title:  { de: '', en: '' },
+      text:   {
+        de: 'Zuverlässig, performant und gut gepflegt. Jannik Hoff hält sein Entwicklungs‑Setup schlank und sorgt für reibungslose Workflows.',
+        en: 'Reliable, performant, and well maintained. Jannik Hoff keeps his development setup lean and ensures smooth workflows.',
+      },
+      sender: { de: 'Alexander Schulz - Fullstack Dev.', en: 'Alexander Schulz - Fullstack Dev.' },
     },
     card4: {
       title:  { de: '', en: '' },
@@ -134,7 +135,7 @@ const translations: TranslationTree = {
         de: 'Produktiv, fokussiert und schnell. Er nutzt das Tooling sinnvoll (Terminal, Tasks, Debugging) und hält das Projekt sauber.',
         en: 'Productive, focused, and fast. He uses the tooling effectively (terminal, tasks, debugging) and keeps the project clean.',
       },
-      sender: { de: 'Visual Studio Code', en: 'Visual Studio Code' },
+      sender: { de: 'Mein PC', en: 'My PC' },
     },
   },
   contact: {

@@ -42,7 +42,12 @@ export class GalleryComponent {
     return Math.min(48, Math.floor(this.vw * 0.05));
   }
 
-  cardHeight = 240;
+  cardHeight(): number {
+    if (this.vw < 480) return 280;
+    if (this.vw < 640) return 260;
+    return 240;
+  }
+
   cardTopOffset = 36;
 
   trackOffset(): number {
