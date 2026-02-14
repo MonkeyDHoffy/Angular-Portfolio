@@ -174,13 +174,13 @@
 
 @media (max-width: 360px) {
   .hero-rail {
-    height: clamp(140px, 48vw, 220px);
+    height: clamp(180px, 48vw, 220px);
     --cap-h: clamp(26px, 5.2vw, 46px);
     --cap-w: clamp(18px, 4vw, 34px);
   }
 
   .hero-rail--right {
-    height: clamp(130px, 44vw, 210px);
+    height: clamp(200px, 44vw, 210px);
     --cap-h: clamp(26px, 5.2vw, 46px);
     --cap-w: clamp(18px, 4vw, 34px);
     --icon-gap: 10px;

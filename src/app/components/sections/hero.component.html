@@ -46,15 +46,15 @@
                     <span [ngClass]="indicatorClasses('github')" aria-hidden="true"></span>
                 </div>
             </a>
-            <button type="button" aria-label="LinkedIn"
-                class="pointercss flex items-center justify-center group bg-transparent border-0 p-0"
+            <a href="https://www.linkedin.com/in/jannik-hoff-6b4098322" target="_blank" rel="noopener noreferrer"
+                aria-label="LinkedIn" class="pointercss flex items-center justify-center group"
                 (click)="selectContact('linkedin')">
                 <div class="relative flex items-center justify-center">
                     <app-icon-with-hover [baseSrc]="linkedinIcon" [hoverSrc]="linkedinIconHover"
                         alt="LinkedIn"></app-icon-with-hover>
                     <span [ngClass]="indicatorClasses('linkedin')" aria-hidden="true"></span>
                 </div>
-            </button>
+            </a>
         </div>
         <a href="mailto:hoffjannik95&#64;gmail.com"
             class="hero-rail__label hidden lg:block">hoffjannik95&#64;gmail.com</a>
