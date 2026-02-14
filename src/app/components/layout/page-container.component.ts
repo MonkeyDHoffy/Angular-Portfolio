@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="page-container w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-12" [ngClass]="className">
+    <div class="page-container w-full max-w-7xl mx-auto px-6 max-[500px]:px-3 sm:px-8 lg:px-12" [ngClass]="className">
       <ng-content></ng-content>
     </div>
   `

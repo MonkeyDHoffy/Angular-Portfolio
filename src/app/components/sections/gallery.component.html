@@ -11,7 +11,7 @@
                         [style.marginRight.px]="cardGap()" (click)="goTo(i)"
                         (keydown)="($event.key === 'Enter' || $event.key === ' ' ? goTo(i) : null)" tabindex="0"
                         [attr.aria-pressed]="i === activeIndex">
-                        <img *ngIf="i === activeIndex" [src]="quotesImg" alt="Quotes" class=""
+                        <img *ngIf="i === activeIndex && vw > 730" [src]="quotesImg" alt="Quotes" class=""
                             [style.position]="'absolute'" [style.top.px]="vw < 640 ? -20 : -24"
                             [style.left.px]="vw < 640 ? -32 : -52"
                             [style.width.px]="Math.min(89, Math.max(60, Math.floor(vw * 0.12)))"
@@ -33,12 +33,12 @@
 
                 <div aria-hidden
                     class="pointer-events-none absolute left-0 w-[100px] bg-gradient-to-r from-black/25 to-transparent transition-opacity duration-0.0001"
-                    [class.opacity-100]="activeIndex > 0" [class.opacity-0]="activeIndex === 0"
+                    [class.opacity-100]="activeIndex > 0 && vw >= 950" [class.opacity-0]="activeIndex === 0 || vw < 950"
                     [style.top.px]="cardTopOffset" [style.height.px]="cardHeight() - 10"></div>
                 <div aria-hidden
                     class="pointer-events-none absolute right-0 w-[100px] bg-gradient-to-l from-black/25 to-transparent transition-opacity duration-0.0001"
-                    [class.opacity-100]="activeIndex < cards().length - 1"
-                    [class.opacity-0]="activeIndex >= cards().length - 1" [style.top.px]="cardTopOffset"
+                    [class.opacity-100]="activeIndex < cards().length - 1 && vw >= 950"
+                    [class.opacity-0]="activeIndex >= cards().length - 1 || vw < 950" [style.top.px]="cardTopOffset"
                     [style.height.px]="cardHeight() - 10"></div>
             </div>
 
