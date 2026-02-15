@@ -1,4 +1,4 @@
-<section class="text-white py-8 debug-component" id="contact">
+<section class="text-white py-8 debug-component" id="contact" data-aos="fade-up">
     <app-page-container>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div class="rounded-2xl w-full lg:w-[var(--card-size)]">
@@ -57,8 +57,7 @@
                         [invalid]="!!formErrors.message"
                         [describedBy]="formErrors.message ? 'contact-message-error' : null"
                         (fieldBlur)="validateField('message')"></app-form-field>
-                    <p *ngIf="formErrors.message" id="contact-message-error"
-                        class="text-sm text-red-400 font-karla">
+                    <p *ngIf="formErrors.message" id="contact-message-error" class="text-sm text-red-400 font-karla">
                         {{ formErrors.message }}
                     </p>
 
@@ -77,8 +76,7 @@
                             {{ lang.t('contact.form.privacy_text').split(lang.t('contact.form.privacy_link'))[1] }}
                         </p>
                     </div>
-                    <p *ngIf="formErrors.privacy" id="contact-privacy-error"
-                        class="text-sm text-red-400 font-karla">
+                    <p *ngIf="formErrors.privacy" id="contact-privacy-error" class="text-sm text-red-400 font-karla">
                         {{ formErrors.privacy }}
                     </p>
 

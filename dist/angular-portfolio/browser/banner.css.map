@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/components/sections/banner.css"],
-  "sourcesContent": ["/* Banner unten im Hero platzieren */\r\n.banner-wrapper {\r\n  position: absolute;\r\n  bottom: 80px;\r\n  left: -21px;\r\n  width: 150%;\r\n  height: 61.99999848887589px;\r\n  transform: rotate(-3deg);\r\n  opacity: 1;\r\n  background: #FFFFFF1F;\r\n  backdrop-filter: blur(5.300000190734863px);\r\n  box-sizing: border-box;\r\n  z-index: 10;\r\n  overflow: hidden;\r\n  display: flex;\r\n  align-items: center;\r\n  padding: 12px 32px;\r\n}\r\n\r\n.banner-track {\r\n  display: flex;\r\n  animation: scroll 180s linear infinite;\r\n}\r\n\r\n.banner-content {\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 56px;\r\n  flex-shrink: 0;\r\n}\r\n\r\n\r\n@keyframes scroll {\r\n  0% {\r\n    transform: translateX(0);\r\n  }\r\n  100% {\r\n    transform: translateX(-50%);\r\n  }\r\n}\r\n"],
-  "mappings": ";AACA,CAAC;AACC,YAAU;AACV,UAAQ;AACR,QAAM;AACN,SAAO;AACP,UAAQ;AACR,aAAW,OAAO;AAClB,WAAS;AACT,cAAY;AACZ,2BAAiB,KAAK;AAAtB,mBAAiB,KAAK;AACtB,cAAY;AACZ,WAAS;AACT,YAAU;AACV,WAAS;AACT,eAAa;AACb,WAAS,KAAK;AAChB;AAEA,CAAC;AACC,WAAS;AACT,aAAW,OAAO,KAAK,OAAO;AAChC;AAEA,CAAC;AACC,WAAS;AACT,eAAa;AACb,OAAK;AACL,eAAa;AACf;AAGA,WAXa;AAYX;AACE,eAAW,WAAW;AACxB;AACA;AACE,eAAW,WAAW;AACxB;AACF;",
-  "names": []
-}

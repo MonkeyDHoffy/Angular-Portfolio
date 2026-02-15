@@ -53,22 +53,22 @@ export class ProjectsComponent {
         { label: 'projects.github', href: 'https://github.com/MonkeyDHoffy/El-Pollo-Loco', variant: 'secondary' }
       ]
     },
-    bubble: {
-      index: '03',
-      titleKey: 'projectDetails.p3.title',
-      questionKey: 'projectDetails.p3.question',
-      descriptionKey: 'projectDetails.p3.description',
-      techStack: ['JavaScript', 'HTML', 'CSS'],
-      imageSrc: 'assets/projects/bubble.png',
-      imageAlt: 'DA Bubble chat app screenshot',
-      primaryActions: [
-        { label: 'projects.liveDemo', href: 'https://pokedex.hoffja.de', variant: 'primary' },
-        { label: 'projects.github', href: 'https://github.com/MonkeyDHoffy/Pok-dex', variant: 'secondary' }
-      ]
-    }
+    // bubble: {
+    //   index: '03',
+    //   titleKey: 'projectDetails.p3.title',
+    //   questionKey: 'projectDetails.p3.question',
+    //   descriptionKey: 'projectDetails.p3.description',
+    //   techStack: ['JavaScript', 'HTML', 'CSS'],
+    //   imageSrc: 'assets/projects/bubble.png',
+    //   imageAlt: 'DA Bubble chat app screenshot',
+    //   primaryActions: [
+    //     { label: 'projects.liveDemo', href: 'https://pokedex.hoffja.de', variant: 'primary' },
+    //     { label: 'projects.github', href: 'https://github.com/MonkeyDHoffy/Pok-dex', variant: 'secondary' }
+    //   ]
+    // }
   };
 
-  order: Array<keyof typeof this.projectsMap> = ['join', 'pollo', 'bubble'];
+  order: Array<keyof typeof this.projectsMap> = ['join', 'pollo' /*, 'bubble'*/];
 
   constructor(public lang: LanguageService, private bodyScroll: BodyScrollService) {}
 
