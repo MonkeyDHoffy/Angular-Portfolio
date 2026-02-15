@@ -167,6 +167,21 @@ const translations: TranslationTree = {
         de: 'Projekt, Ziele oder Timeline? Ein paar Stichpunkte helfen mir bei der Vorbereitung.',
         en: 'A few notes on scope, goals, or timeline help me prepare.',
       },
+      name_required:  { de: 'Bitte gib deinen Namen ein.', en: 'Please enter your name.' },
+      email_required: { de: 'Bitte gib deine E-Mail-Adresse ein.', en: 'Please enter your email address.' },
+      email_invalid:  { de: 'Bitte gib eine gültige E-Mail-Adresse ein.', en: 'Please enter a valid email address.' },
+      message_required: {
+        de: 'Bitte beschreibe kurz dein Anliegen.',
+        en: 'Please describe your request.',
+      },
+      privacy_required: {
+        de: 'Bitte bestätige die Datenschutzrichtlinie.',
+        en: 'Please confirm the privacy policy.',
+      },
+      form_invalid: {
+        de: 'Bitte prüfe die markierten Felder, bevor du die Nachricht sendest.',
+        en: 'Please review the highlighted fields before sending your message.',
+      },
       privacy_text:   {
         de: 'Ich habe die Datenschutzrichtlinie gelesen und stimme der Verarbeitung meiner Daten zu.',
         en: 'I have read the privacy policy and agree to the processing of my data as outlined.',

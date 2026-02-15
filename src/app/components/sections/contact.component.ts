@@ -9,12 +9,14 @@ import { FormFieldComponent } from '../ui/form-field.component';
 const TOAST_DURATION = 4600;
 
 type ToastType = 'success' | 'error';
+type FieldName = 'name' | 'email' | 'message' | 'privacy';
 
 interface FormState {
   name: string;
   email: string;
   message: string;
   company: string;
+  privacyAccepted: boolean;
 }
 
 interface Toast {
@@ -35,6 +37,8 @@ export class ContactComponent implements OnDestroy {
   isSubmitting = false;
   notification: Toast | null = null;
   toastDuration = TOAST_DURATION;
+  submitAttempted = false;
+  formErrors: Partial<Record<FieldName, string>> = {};
   private timer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(public lang: LanguageService) {}
@@ -44,7 +48,7 @@ export class ContactComponent implements OnDestroy {
   }
 
   private createEmptyFormState(): FormState {
-    return { name: '', email: '', message: '', company: '' };
+    return { name: '', email: '', message: '', company: '', privacyAccepted: false };
   }
 
   private buildPayload(data: FormState) {
@@ -64,10 +68,73 @@ export class ContactComponent implements OnDestroy {
     return Boolean(payload.name && payload.email && payload.message);
   }
 
+  private isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  onFieldInput(field: FieldName, value: string): void {
+    this.formData = { ...this.formData, [field]: value };
+    if (this.submitAttempted || this.formErrors[field]) {
+      this.validateField(field);
+    }
+  }
+
+  onPrivacyChange(value: boolean): void {
+    this.formData = { ...this.formData, privacyAccepted: value };
+    if (this.submitAttempted || this.formErrors.privacy) {
+      this.validateField('privacy');
+    }
+  }
+
+  validateField(field: FieldName): void {
+    const payload = this.buildPayload(this.formData);
+    if (field === 'name') {
+      this.formErrors.name = payload.name
+        ? ''
+        : this.lang.t('contact.form.name_required');
+      return;
+    }
+    if (field === 'email') {
+      if (!payload.email) {
+        this.formErrors.email = this.lang.t('contact.form.email_required');
+        return;
+      }
+      this.formErrors.email = this.isValidEmail(payload.email)
+        ? ''
+        : this.lang.t('contact.form.email_invalid');
+      return;
+    }
+    if (field === 'message') {
+      this.formErrors.message = payload.message
+        ? ''
+        : this.lang.t('contact.form.message_required');
+      return;
+    }
+    if (field === 'privacy') {
+      this.formErrors.privacy = this.formData.privacyAccepted
+        ? ''
+        : this.lang.t('contact.form.privacy_required');
+    }
+  }
+
+  private validateAll(): boolean {
+    this.validateField('name');
+    this.validateField('email');
+    this.validateField('message');
+    this.validateField('privacy');
+    return (
+      !this.formErrors.name &&
+      !this.formErrors.email &&
+      !this.formErrors.message &&
+      !this.formErrors.privacy
+    );
+  }
+
   async handleSubmit(event: Event): Promise<void> {
     event.preventDefault();
     this.isSubmitting = true;
     this.notification = null;
+    this.submitAttempted = true;
 
     if (this.isHoneypotTriggered(this.formData.company)) {
       this.isSubmitting = false;
@@ -75,9 +142,10 @@ export class ContactComponent implements OnDestroy {
     }
 
     const payload = this.buildPayload(this.formData);
+    const isValid = this.validateAll();
 
-    if (!this.hasAllRequired(payload)) {
-      this.showNotification('error', this.lang.t('contact.form.error'));
+    if (!isValid) {
+      this.showNotification('error', this.lang.t('contact.form.form_invalid'));
       this.isSubmitting = false;
       return;
     }
@@ -91,6 +159,8 @@ export class ContactComponent implements OnDestroy {
       if (!response.ok) throw new Error('Request failed');
       this.showNotification('success', this.lang.t('contact.form.success'));
       this.formData = this.createEmptyFormState();
+      this.formErrors = {};
+      this.submitAttempted = false;
     } catch (err) {
       console.error('Contact form submission failed', err);
       this.showNotification('error', this.lang.t('contact.form.error'));

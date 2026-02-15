@@ -22,5 +22,3 @@ describe('PageContainerComponent', () => {
     expect(component).toBeTruthy();
   });
 });
-// Temporär entfernt, da keine Test-Runner-Typen installiert sind.
-// Test-Datei geleert, um TS2593 zu vermeiden.
