@@ -16,7 +16,8 @@ const PROJECT_ICONS: Record<string, string> = {
   selector: 'app-project-slide',
   standalone: true,
   imports: [CommonModule, TechBadgeComponent],
-  templateUrl: './project-slide.component.html'
+  templateUrl: './project-slide.component.html',
+  styleUrls: ['./project-slide.component.scss']
 })
 export class ProjectSlideComponent {
   @Input() index = '';
