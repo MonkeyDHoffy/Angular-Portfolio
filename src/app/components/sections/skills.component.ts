@@ -28,7 +28,7 @@ export class SkillsComponent {
     { icon: 'assets/skills/git.png', label: 'Git' },
     { icon: 'assets/skills/api.png', label: 'REST-API' },
     { icon: 'assets/skills/scrum.png', label: 'Scrum' },
-    { icon: 'assets/skills/grow.png', label: 'Growth mindset', className: 'text-teal-400 cursor-pointer skill-pulse-scale', tooltip: 'I am learning: Python/Django' }
+    { icon: 'assets/skills/grow.png', label: 'Growth mindset', className: 'text-teal-400 skill-pulse-scale', tooltip: 'I am learning: Python/Django' }
   ];
 
   goContact(): void {

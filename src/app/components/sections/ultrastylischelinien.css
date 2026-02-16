@@ -39,7 +39,7 @@
 }
 
 .hero-rail--left {
-  left: max(12px, min(var(--page-container-offset), 80px));
+  left: var(--page-container-offset);
   --line-color: #3DCFB6;
 }
 
@@ -77,7 +77,7 @@
 }
 
 .hero-rail--right {
-  right: max(12px, min(var(--page-container-offset), 80px));
+  right: var(--page-container-offset);
   height: clamp(140px, 22vw, 256px);
   --cap-h: clamp(28px, 3.5vw, 48px);
   --cap-w: clamp(18px, 2.5vw, 30px);
@@ -122,11 +122,11 @@
 
 @media (max-width: 640px) {
   .hero-rail--left {
-    left: max(12px, var(--page-container-offset));
+    left: var(--page-container-offset);
   }
 
   .hero-rail--right {
-    right: max(12px, var(--page-container-offset));
+    right: var(--page-container-offset);
   }
 }
 
