@@ -39,7 +39,7 @@
 }
 
 .hero-rail--left {
-  left: var(--page-container-offset);
+  left: calc(var(--page-container-offset) - 5px);
   --line-color: #3DCFB6;
 }
 
@@ -122,7 +122,7 @@
 
 @media (max-width: 640px) {
   .hero-rail--left {
-    left: var(--page-container-offset);
+    left: calc(var(--page-container-offset) - 5px);
   }
 
   .hero-rail--right {
