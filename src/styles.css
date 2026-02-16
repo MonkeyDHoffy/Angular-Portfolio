@@ -122,6 +122,7 @@ section[id] {
   );
   opacity: var(--cursor-opacity, 1);
   transition: --cursor-size 240ms ease, opacity 200ms ease;
+  z-index: 1000;
 }
 
 .font-firacode {
