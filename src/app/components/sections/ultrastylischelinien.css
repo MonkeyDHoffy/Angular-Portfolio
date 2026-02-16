@@ -77,7 +77,7 @@
 }
 
 .hero-rail--right {
-  right: var(--page-container-offset);
+  right: calc(var(--page-container-offset) - 14px);
   height: clamp(140px, 22vw, 256px);
   --cap-h: clamp(28px, 3.5vw, 48px);
   --cap-w: clamp(18px, 2.5vw, 30px);
@@ -126,7 +126,7 @@
   }
 
   .hero-rail--right {
-    right: var(--page-container-offset);
+    right: calc(var(--page-container-offset) - 14px);
   }
 }
 
