@@ -69,12 +69,21 @@ export class ContactComponent implements OnDestroy {
   }
 
   private isValidEmail(email: string): boolean {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    // Strict email validation:
+    // - Local part: anything except spaces and @
+    // - @ symbol required
+    // - Domain: must start with alphanumeric, can contain hyphens in middle
+    // - TLD: dot followed by at least 2 letters
+    // Rejects: jannik@.de.de, test@de, blabla@.de, test@domain (no TLD)
+    return /^[^\s@]+@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/.test(email);
   }
 
   onFieldInput(field: FieldName, value: string): void {
     this.formData = { ...this.formData, [field]: value };
-    if (this.submitAttempted || this.formErrors[field]) {
+    // For email, validate in real-time to show format errors immediately
+    if (field === 'email') {
+      this.validateField(field);
+    } else if (this.submitAttempted || this.formErrors[field]) {
       this.validateField(field);
     }
   }
