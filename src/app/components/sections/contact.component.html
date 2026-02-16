@@ -27,41 +27,53 @@
             </div>
 
             <div class="rounded-2xl w-full lg:w-[var(--card-size)]">
-                <form class="space-y-8" (submit)="handleSubmit($event)">
+                <form class="space-y-8 relative" (submit)="handleSubmit($event)">
                     <input type="text" name="company" [(ngModel)]="formData.company" class="hidden" tabindex="-1"
                         autocomplete="off" />
 
-                    <app-form-field [label]="lang.t('contact.form.name_label')" type="text" name="name"
-                        [model]="formData.name" (modelChange)="onFieldInput('name', $event)"
-                        [placeholder]="lang.t('contact.form.name_ph')" autocomplete="name" [required]="true"
-                        inputId="contact-name" [invalid]="!!formErrors.name"
-                        [describedBy]="formErrors.name ? 'contact-name-error' : null"
-                        (fieldBlur)="validateField('name')"></app-form-field>
-                    <p *ngIf="formErrors.name" id="contact-name-error" class="text-sm text-red-400 font-karla">
-                        {{ formErrors.name }}
-                    </p>
+                    <div class="relative">
+                        <app-form-field [label]="lang.t('contact.form.name_label')" type="text" name="name"
+                            [model]="formData.name" (modelChange)="onFieldInput('name', $event)"
+                            [placeholder]="lang.t('contact.form.name_ph')" autocomplete="name" [required]="true"
+                            inputId="contact-name" [invalid]="!!formErrors.name"
+                            [describedBy]="formErrors.name ? 'contact-name-error' : null"
+                            (fieldBlur)="validateField('name')"></app-form-field>
+                        <p id="contact-name-error"
+                            class="absolute text-sm text-red-400 font-karla transition-opacity duration-200 top-full mt-1"
+                            [class.opacity-0]="!formErrors.name" [class.hidden]="!formErrors.name">
+                            {{ formErrors.name }}
+                        </p>
+                    </div>
 
-                    <app-form-field [label]="lang.t('contact.form.email_label')" type="email" name="email"
-                        [model]="formData.email" (modelChange)="onFieldInput('email', $event)"
-                        [placeholder]="lang.t('contact.form.email_ph')" autocomplete="email" [required]="true"
-                        inputId="contact-email" [invalid]="!!formErrors.email"
-                        [describedBy]="formErrors.email ? 'contact-email-error' : null"
-                        (fieldBlur)="validateField('email')"></app-form-field>
-                    <p *ngIf="formErrors.email" id="contact-email-error" class="text-sm text-red-400 font-karla">
-                        {{ formErrors.email }}
-                    </p>
+                    <div class="relative">
+                        <app-form-field [label]="lang.t('contact.form.email_label')" type="email" name="email"
+                            [model]="formData.email" (modelChange)="onFieldInput('email', $event)"
+                            [placeholder]="lang.t('contact.form.email_ph')" autocomplete="email" [required]="true"
+                            inputId="contact-email" [invalid]="!!formErrors.email"
+                            [describedBy]="formErrors.email ? 'contact-email-error' : null"
+                            (fieldBlur)="validateField('email')"></app-form-field>
+                        <p id="contact-email-error"
+                            class="absolute text-sm text-red-400 font-karla transition-opacity duration-200 top-full mt-1"
+                            [class.opacity-0]="!formErrors.email" [class.hidden]="!formErrors.email">
+                            {{ formErrors.email }}
+                        </p>
+                    </div>
 
-                    <app-form-field [label]="lang.t('contact.form.message_label')" [textarea]="true" [rows]="3"
-                        name="message" [model]="formData.message" (modelChange)="onFieldInput('message', $event)"
-                        [placeholder]="lang.t('contact.form.message_ph')" [required]="true" inputId="contact-message"
-                        [invalid]="!!formErrors.message"
-                        [describedBy]="formErrors.message ? 'contact-message-error' : null"
-                        (fieldBlur)="validateField('message')"></app-form-field>
-                    <p *ngIf="formErrors.message" id="contact-message-error" class="text-sm text-red-400 font-karla">
-                        {{ formErrors.message }}
-                    </p>
+                    <div class="relative">
+                        <app-form-field [label]="lang.t('contact.form.message_label')" [textarea]="true" [rows]="3"
+                            name="message" [model]="formData.message" (modelChange)="onFieldInput('message', $event)"
+                            [placeholder]="lang.t('contact.form.message_ph')" [required]="true"
+                            inputId="contact-message" [invalid]="!!formErrors.message"
+                            [describedBy]="formErrors.message ? 'contact-message-error' : null"
+                            (fieldBlur)="validateField('message')"></app-form-field>
+                        <p id="contact-message-error"
+                            class="absolute text-sm text-red-400 font-karla transition-opacity duration-200 top-full mt-1"
+                            [class.opacity-0]="!formErrors.message" [class.hidden]="!formErrors.message">
+                            {{ formErrors.message }}
+                        </p>
+                    </div>
 
-                    <div class="flex items-start gap-3 text-sm text-gray-400">
+                    <div class="relative flex items-start gap-3 text-sm text-gray-400">
                         <input type="checkbox" name="privacy" [ngModel]="formData.privacyAccepted"
                             (ngModelChange)="onPrivacyChange($event)" required
                             class="mt-1 accent-secondary hover:cursor-pointer"
@@ -75,10 +87,12 @@
                             </a>
                             {{ lang.t('contact.form.privacy_text').split(lang.t('contact.form.privacy_link'))[1] }}
                         </p>
+                        <p id="contact-privacy-error"
+                            class="absolute text-sm text-red-400 font-karla transition-opacity duration-200 top-full mt-1"
+                            [class.opacity-0]="!formErrors.privacy" [class.hidden]="!formErrors.privacy">
+                            {{ formErrors.privacy }}
+                        </p>
                     </div>
-                    <p *ngIf="formErrors.privacy" id="contact-privacy-error" class="text-sm text-red-400 font-karla">
-                        {{ formErrors.privacy }}
-                    </p>
 
                     <button type="submit" [disabled]="isSubmitting"
                         class="font-karla px-6 py-2 rounded-full border transition"
