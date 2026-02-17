@@ -102,7 +102,7 @@ const translations: TranslationTree = {
         de: 'Klarer Code, gute Tests und sinnvolle Komponenten. Jannik Hoff\'s Frontend‑Workflows sind effizient und professionell.',
         en: 'Clear code, solid tests, and well‑structured components. Jannik Hoff’s frontend workflows are efficient and professional.',
       },
-      sender: { de: 'GitHub Copilot', en: 'GitHub Copilot' },
+      sender: { de: 'Evan B.', en: 'Evan B.' },
     },
   card2: {
       title:  { de: '', en: '' },
@@ -110,7 +110,7 @@ const translations: TranslationTree = {
         de: 'Strukturiert, präzise und lösungsorientiert. Jannik Hoff kombiniert saubere Architektur mit solider UX und sorgt für wartbaren Code.',
         en: 'Structured, precise, and solution‑oriented. Jannik Hoff combines clean architecture with solid UX and delivers maintainable code.',
       },
-      sender: { de: 'ChatGPT', en: 'ChatGPT' },
+      sender: { de: 'Charles G. Peter', en: 'Charles G. Peter' },
       
     },
      card3: {
@@ -135,7 +135,7 @@ const translations: TranslationTree = {
         de: 'Produktiv, fokussiert und schnell. Er nutzt das Tooling sinnvoll (Terminal, Tasks, Debugging) und hält das Projekt sauber.',
         en: 'Productive, focused, and fast. He uses the tooling effectively (terminal, tasks, debugging) and keeps the project clean.',
       },
-      sender: { de: 'Mein PC', en: 'My PC' },
+      sender: { de: 'Till Ganster', en: 'Till Ganster' },
     },
   },
   contact: {
