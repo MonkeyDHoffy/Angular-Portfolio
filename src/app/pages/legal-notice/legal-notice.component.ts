@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { HeaderComponent } from '../../components/layout/header.component';
+import { FooterComponent } from '../../components/layout/footer.component';
 import { LanguageService } from '../../services/language.service';
 
 const INFO_SECTION_KEYS = ['acceptance', 'scope', 'ownership', 'usage', 'external', 'disclaimer'];
@@ -8,7 +9,7 @@ const INFO_SECTION_KEYS = ['acceptance', 'scope', 'ownership', 'usage', 'externa
 @Component({
   selector: 'app-legal-notice',
   standalone: true,
-  imports: [CommonModule, HeaderComponent],
+  imports: [CommonModule, HeaderComponent, FooterComponent],
   templateUrl: './legal-notice.component.html'
 })
 export class LegalNoticeComponent {
